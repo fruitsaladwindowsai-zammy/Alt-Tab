@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>winscroller-alt-tab</id>
+    <version>0.1.0</version>
+    <title>Winscroller Alt+Tab</title>
+    <authors>fruitsaladwindowsai-zammy</authors>
+    <owners>fruitsaladwindowsai-zammy</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/fruitsaladwindowsai-zammy/Alt-Tab</projectUrl>
+    <repository type="git" url="https://github.com/fruitsaladwindowsai-zammy/Alt-Tab.git" />
+    <icon>docs\preview.png</icon>
+    <description>A fast, depth-based Alt+Tab window switcher and Virtual Desktop workspace organizer for Windows 10 and 11, written in pure Rust with Direct3D 11, Direct2D, DirectWrite, WIC, and Win32 — visually inspired by mtolhuys/fathom.</description>
+    <releaseNotes>https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/blob/main/RELEASE_NOTES.md</releaseNotes>
+    <copyright>Copyright (c) 2026</copyright>
+    <tags>alt-tab window-switcher virtual-desktop rust direct2d direct3d11 windows productivity utility tool</tags>
+  </metadata>
+  <files>
+    <file src="target\release\winscroller-alt-tab.exe" target="tools\winscroller-alt-tab.exe" />
+    <file src="docs\preview.png" target="docs\preview.png" />
+    <file src="README.md" target="README.md" />
+    <file src="LICENSE" target="LICENSE" />
+    <file src="KEYBINDINGS.md" target="KEYBINDINGS.md" />
+  </files>
+</package>

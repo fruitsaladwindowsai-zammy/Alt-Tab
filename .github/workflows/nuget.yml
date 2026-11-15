@@ -1,0 +1,54 @@
+name: Build and Publish NuGet Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish_to_nuget_org:
+        description: 'Publish to NuGet.org (requires NUGET_API_KEY secret)'
+        type: boolean
+        default: false
+
+jobs:
+  build-and-pack:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Pack NuGet Package
+        run: nuget pack winscroller-alt-tab.nuspec -OutputDirectory target
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: target/*.nupkg
+
+      - name: Push to GitHub Packages NuGet Registry
+        run: |
+          nuget sources Add -Name "GitHub" -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" -UserName "${{ github.repository_owner }}" -Password "${{ secrets.GITHUB_TOKEN }}"
+          nuget push target\*.nupkg -Source "GitHub" -SkipDuplicate
+
+      - name: Push to NuGet.org
+        if: ${{ inputs.publish_to_nuget_org == true || (github.event_name == 'release' && env.NUGET_API_KEY != '') }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          nuget push target\*.nupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey "${{ secrets.NUGET_API_KEY }}" -SkipDuplicate

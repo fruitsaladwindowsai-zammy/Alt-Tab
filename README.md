@@ -40,6 +40,18 @@ cargo build --release
 
 The optimized binary is written to `target\release\winscroller-alt-tab.exe`.
 
+### Option 3 — NuGet Package (Feeds & CI/CD)
+
+Pack into a self-contained `.nupkg` tool package for GitHub Packages NuGet Registry, NuGet.org, or Chocolatey:
+
+```powershell
+# Create target\winscroller-alt-tab.0.1.0.nupkg
+.\package-nuget.ps1
+
+# Or push directly to GitHub Packages NuGet Registry
+.\package-nuget.ps1 -PushGithub -GithubOwner <your-username> -GithubToken <ghp_token>
+```
+
 ### Run Modes
 
 ```powershell

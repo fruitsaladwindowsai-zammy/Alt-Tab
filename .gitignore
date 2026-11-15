@@ -2,3 +2,5 @@
 *.png
 !docs/preview.png
 *.log
+nuget.exe
+*.nupkg
