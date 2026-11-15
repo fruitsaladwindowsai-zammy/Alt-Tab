@@ -1,6 +1,10 @@
 # Winscroller Alt+Tab
 
-A depth-based `Alt+Tab` window switcher and Virtual Desktop workspace overview for Windows 10 and Windows 11, written in pure Rust with Direct3D 11, Direct2D, DirectWrite, WIC, and Win32 — visually inspired by [mtolhuys/fathom](https://github.com/mtolhuys/fathom).
+A fast, depth-based `Alt+Tab` switcher and Virtual Desktop workspace organizer for Windows 10 & 11 power users—written in pure Rust with Direct3D 11 and Direct2D, visually inspired by [mtolhuys/fathom](https://github.com/mtolhuys/fathom).
+
+`Windows 10 / 11 (x64)` · `Pure Rust` · `Direct3D 11 + Direct2D` · `MIT License`
+
+![Winscroller Alt+Tab preview](docs/preview.png)
 
 ---
 
@@ -17,13 +21,21 @@ A depth-based `Alt+Tab` window switcher and Virtual Desktop workspace overview f
 
 ## Quick Start
 
-### Build from Source
+### Option 1 — Run Prebuilt Binary
+Download `winscroller-alt-tab.exe` from the latest [Releases](../../releases) page and launch it from PowerShell (prompts once for UAC elevation so `Alt+Tab` works over Admin apps):
 
-Requires Rust (`cargo`) on Windows (supports `x86_64-pc-windows-gnu` and `x86_64-pc-windows-msvc`).
+```powershell
+.\winscroller-alt-tab.exe
+```
+
+### Option 2 — Build & Run from Source
+
+Requires Rust (`cargo`) on Windows (`x86_64-pc-windows-gnu` or `x86_64-pc-windows-msvc`):
 
 ```powershell
 cargo test
 cargo build --release
+.\target\release\winscroller-alt-tab.exe --demo
 ```
 
 The optimized binary is written to `target\release\winscroller-alt-tab.exe`.
