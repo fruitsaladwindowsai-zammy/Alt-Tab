@@ -89,6 +89,131 @@ pub fn setup_demo(ctrl: &mut Controller, store: &mut MediaStore, width: f64, hei
     ctrl.scene_depth = crate::controller::AnimValue::snap(ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
 }
 
+pub fn render_gallery(
+    target_dir: &str,
+    wic: &windows::Win32::Graphics::Imaging::IWICImagingFactory,
+    renderer: &mut crate::renderer::Renderer,
+    cfg: &crate::config::Config,
+    now_ms: u64,
+) -> windows::core::Result<()> {
+    std::fs::create_dir_all(target_dir).ok();
+    let frames_dir = format!("{target_dir}/frames");
+    std::fs::create_dir_all(&frames_dir).ok();
+
+    // 1. Overview (Hero Preview) at 1920x1080
+    let mut ctrl = Controller::new(cfg.clone(), cfg.resolve_palette(crate::win_platform::read_windows_auto_theme()));
+    let mut store = MediaStore::default();
+    setup_demo(&mut ctrl, &mut store, 1920.0, 1080.0, now_ms);
+    renderer.render_to_png(wic, &format!("{target_dir}/preview.png"), &ctrl, &store, 1920, 1080, now_ms)?;
+
+    // 2. The Deep Stepping (Dive deeper to window 2 ~/Projects/fathom, depth 2.0)
+    ctrl.jump_to(2, now_ms);
+    ctrl.camera_slot = crate::controller::AnimValue::snap(2.0);
+    ctrl.scene_depth = crate::controller::AnimValue::snap(ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{target_dir}/screenshot-the-deep.png"), &ctrl, &store, 1920, 1080, now_ms)?;
+
+    // 3. Search Filter (Type "fathom" - filters down to Code and Terminal)
+    ctrl.set_filter("fathom".to_string(), now_ms);
+    ctrl.camera_slot = crate::controller::AnimValue::snap(0.0);
+    ctrl.scene_depth = crate::controller::AnimValue::snap(ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{target_dir}/screenshot-search-filter.png"), &ctrl, &store, 1920, 1080, now_ms)?;
+
+    // 4. Drag and Drop between Desktops
+    ctrl.set_filter(String::new(), now_ms);
+    ctrl.jump_to(1, now_ms);
+    ctrl.camera_slot = crate::controller::AnimValue::snap(1.0);
+    ctrl.scene_depth = crate::controller::AnimValue::snap(ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    ctrl.dragging_entry = Some(1);
+    ctrl.drag_pos = (1120.0, 780.0);
+    ctrl.drop_target_group = Some(4); // Workspace 5
+    renderer.render_to_png(wic, &format!("{target_dir}/screenshot-drag-drop.png"), &ctrl, &store, 1920, 1080, now_ms)?;
+
+    // 5. Create New Desktop on the page
+    ctrl.clear_drag();
+    let desc = ctrl.next_demo_workspace_descriptor();
+    ctrl.add_workspace_descriptor(desc);
+    ctrl.hovered_new_desktop = true;
+    renderer.render_to_png(wic, &format!("{target_dir}/screenshot-new-desktop.png"), &ctrl, &store, 1920, 1080, now_ms)?;
+
+    // --- ANIMATION FRAMES (1280x720) for docs/how-it-works.gif ---
+    let frame_w = 1280;
+    let frame_h = 720;
+    let mut f_ctrl = Controller::new(cfg.clone(), cfg.resolve_palette(crate::win_platform::read_windows_auto_theme()));
+    let mut f_store = MediaStore::default();
+    setup_demo(&mut f_ctrl, &mut f_store, frame_w as f64, frame_h as f64, now_ms);
+
+    // Frame 0: Overview, window 0
+    f_ctrl.jump_to(0, now_ms);
+    f_ctrl.camera_slot = crate::controller::AnimValue::snap(0.0);
+    f_ctrl.scene_depth = crate::controller::AnimValue::snap(f_ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_00.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 1: Step to window 1
+    f_ctrl.jump_to(1, now_ms);
+    f_ctrl.camera_slot = crate::controller::AnimValue::snap(1.0);
+    f_ctrl.scene_depth = crate::controller::AnimValue::snap(f_ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_01.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 2: Step to window 2
+    f_ctrl.jump_to(2, now_ms);
+    f_ctrl.camera_slot = crate::controller::AnimValue::snap(2.0);
+    f_ctrl.scene_depth = crate::controller::AnimValue::snap(f_ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_02.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 3: Step to window 3
+    f_ctrl.jump_to(3, now_ms);
+    f_ctrl.camera_slot = crate::controller::AnimValue::snap(3.0);
+    f_ctrl.scene_depth = crate::controller::AnimValue::snap(f_ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_03.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 4: Filter "f"
+    f_ctrl.set_filter("f".to_string(), now_ms);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_04.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 5: Filter "fath"
+    f_ctrl.set_filter("fath".to_string(), now_ms);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_05.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 6: Filter "fathom"
+    f_ctrl.set_filter("fathom".to_string(), now_ms);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_06.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 7: Clear filter
+    f_ctrl.set_filter(String::new(), now_ms);
+    f_ctrl.jump_to(1, now_ms);
+    f_ctrl.camera_slot = crate::controller::AnimValue::snap(1.0);
+    f_ctrl.scene_depth = crate::controller::AnimValue::snap(f_ctrl.selected_entry().map(|e| e.depth).unwrap_or(0.0));
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_07.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 8: Start drag
+    f_ctrl.dragging_entry = Some(1);
+    f_ctrl.drag_pos = (580.0, 360.0);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_08.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 9: Dragging toward workspace 3
+    f_ctrl.drag_pos = (450.0, 600.0);
+    f_ctrl.drop_target_group = Some(2);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_09.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 10: Dragging over workspace 5
+    f_ctrl.drag_pos = (720.0, 600.0);
+    f_ctrl.drop_target_group = Some(4);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_10.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 11: Drop into workspace 5
+    f_ctrl.clear_drag();
+    f_ctrl.move_entry_to_workspace_group(1, 4);
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_11.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    // Frame 12: Click "+ New" desktop
+    let new_d = f_ctrl.next_demo_workspace_descriptor();
+    f_ctrl.add_workspace_descriptor(new_d);
+    f_ctrl.hovered_new_desktop = true;
+    renderer.render_to_png(wic, &format!("{frames_dir}/frame_12.png"), &f_ctrl, &f_store, frame_w, frame_h, now_ms)?;
+
+    Ok(())
+}
+
 fn synthetic_window_preview(w: u32, h: u32, accent: [u8; 3], kind: u8) -> BgraImage {
     let mut buf = vec![0u8; (w * h * 4) as usize];
     let bg = [26u8, 29, 41];

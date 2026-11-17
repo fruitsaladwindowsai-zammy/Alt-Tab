@@ -978,6 +978,20 @@ fn main() {
         return;
     }
 
+    if let Some(pos) = args.iter().position(|a| a == "--render-gallery") {
+        let out_dir = args.get(pos + 1).map(|s| s.as_str()).unwrap_or("docs");
+        let (cfg, _) = Config::load_or_default();
+        let now_ms = now_epoch_ms();
+        {
+            let mut renderer = Renderer::new(&cfg.font_family).expect("init D2D renderer");
+            let wic = win_capture::create_wic_factory().expect("WIC factory");
+            demo::render_gallery(out_dir, &wic, &mut renderer, &cfg, now_ms)
+                .expect("render demo gallery");
+        }
+        unsafe { CoUninitialize(); }
+        return;
+    }
+
     let browse_now = args.iter().any(|a| a == "--browse");
     let demo_now = args.iter().any(|a| a == "--demo");
     let no_elevate = args.iter().any(|a| a == "--no-elevate");

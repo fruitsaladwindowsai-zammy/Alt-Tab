@@ -690,7 +690,8 @@ impl Renderer {
             self.draw_app_icon(entry, hx, icon_y, icon_sz, header_alpha)?;
 
             let age_text = field::age_short(entry.seconds, entry.active, entry.estimated);
-            let age_size = (header_h * 0.4).clamp(9.0, 11.0 * m.text_unit) as f32;
+            let max_age_sz = (11.0 * m.text_unit).max(7.0);
+            let age_size = (header_h * 0.4).clamp(7.0, max_age_sz) as f32;
             let age_w = if age_text.is_empty() {
                 0.0
             } else {
@@ -699,7 +700,8 @@ impl Renderer {
 
             let title_x = hx + icon_sz + 7.0 * m.unit;
             let title_w = (hw - icon_sz - 7.0 * m.unit - age_w).max(1.0);
-            let title_size = (header_h * 0.46).clamp(10.0, 13.0 * m.text_unit) as f32;
+            let max_title_sz = (13.0 * m.text_unit).max(8.0);
+            let title_size = (header_h * 0.46).clamp(8.0, max_title_sz) as f32;
             let title_str = if entry.title.is_empty() { &entry.app_name } else { &entry.title };
             self.draw_text(
                 title_str,

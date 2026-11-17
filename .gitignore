@@ -1,6 +1,8 @@
 /target
 *.png
-!docs/preview.png
+!docs/*.png
+!docs/*.gif
+docs/frames/
 *.log
 nuget.exe
 *.nupkg
