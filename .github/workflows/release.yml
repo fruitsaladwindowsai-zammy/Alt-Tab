@@ -2,11 +2,21 @@ name: Release Build
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   publish-release:
@@ -15,8 +25,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Determine release tag
+        id: meta
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $tag = "${{ github.ref_name }}"
+          } else {
+            $match = Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1
+            if (-not $match) {
+              throw "Could not parse package version from Cargo.toml"
+            }
+            $tag = "v$($match.Matches[0].Groups[1].Value)"
+          }
+          Write-Host "Release tag: $tag"
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
       - name: Install Rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run clippy
+        run: cargo clippy --all-targets
 
       - name: Run unit tests
         run: cargo test
@@ -24,7 +56,7 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
-      - name: Package release archive
+      - name: Package release archive & checksums
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
@@ -36,12 +68,25 @@ jobs:
           Copy-Item LICENSE dist\
           Compress-Archive -Path dist\* -DestinationPath winscroller-alt-tab-x86_64-pc-windows-msvc.zip -Force
 
-      - name: Create GitHub Release
+          $zipHash = (Get-FileHash winscroller-alt-tab-x86_64-pc-windows-msvc.zip -Algorithm SHA256).Hash.ToLower()
+          $exeHash = (Get-FileHash target\release\winscroller-alt-tab.exe -Algorithm SHA256).Hash.ToLower()
+          @(
+            "$zipHash  winscroller-alt-tab-x86_64-pc-windows-msvc.zip"
+            "$exeHash  winscroller-alt-tab.exe"
+          ) | Out-File -FilePath SHA256SUMS.txt -Encoding ascii
+
+      - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Winscroller Alt+Tab ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           body_path: RELEASE_NOTES.md
+          make_latest: true
+          overwrite_files: true
           files: |
             winscroller-alt-tab-x86_64-pc-windows-msvc.zip
             target\release\winscroller-alt-tab.exe
+            SHA256SUMS.txt
           draft: false
           prerelease: false
