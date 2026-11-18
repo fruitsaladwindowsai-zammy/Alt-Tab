@@ -6,18 +6,18 @@ use windows::Win32::Foundation::{HWND, POINT};
 use windows::Win32::Graphics::Gdi::{
     CreateBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, SelectObject,
 };
+use windows::Win32::System::Registry::{
+    RegCloseKey, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW,
+    HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_SZ,
+};
 use windows::Win32::UI::Shell::{
     ShellExecuteW, Shell_NotifyIconW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE,
     NOTIFYICONDATAW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateIconIndirect, CreatePopupMenu, DestroyIcon, DestroyMenu, GetCursorPos,
-    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_CHECKED, MF_SEPARATOR,
-    MF_STRING, TPM_BOTTOMALIGN, TPM_LEFTALIGN, WM_USER,
-};
-use windows::Win32::System::Registry::{
-    RegCloseKey, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW, HKEY_CURRENT_USER,
-    KEY_READ, KEY_WRITE, REG_SZ,
+    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_CHECKED, MF_SEPARATOR, MF_STRING,
+    TPM_BOTTOMALIGN, TPM_LEFTALIGN, WM_USER,
 };
 
 pub const WM_TRAY_ICON: u32 = WM_USER + 40;
@@ -56,13 +56,25 @@ impl TrayIcon {
 
     pub fn show_menu(&self, is_elevated: bool) {
         unsafe {
-            let Ok(menu) = CreatePopupMenu() else { return; };
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
 
             append_item(menu, CMD_BROWSE, "Open Winscroller Alt+Tab (Browse)", false);
             append_item(menu, CMD_OPEN_CONFIG, "Open config.toml", false);
-            append_item(menu, CMD_AUTOSTART, "Start with Windows", is_autostart_enabled());
+            append_item(
+                menu,
+                CMD_AUTOSTART,
+                "Start with Windows",
+                is_autostart_enabled(),
+            );
             if !is_elevated {
-                append_item(menu, CMD_ELEVATE, "Restart as Administrator (for Admin apps)", false);
+                append_item(
+                    menu,
+                    CMD_ELEVATE,
+                    "Restart as Administrator (for Admin apps)",
+                    false,
+                );
             }
             let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
             append_item(menu, CMD_EXIT, "Exit Winscroller Alt+Tab", false);
@@ -101,16 +113,29 @@ impl Drop for TrayIcon {
     }
 }
 
-unsafe fn append_item(menu: windows::Win32::UI::WindowsAndMessaging::HMENU, id: usize, text: &str, checked: bool) {
+unsafe fn append_item(
+    menu: windows::Win32::UI::WindowsAndMessaging::HMENU,
+    id: usize,
+    text: &str,
+    checked: bool,
+) {
     let w: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
-    let flags = if checked { MF_STRING | MF_CHECKED } else { MF_STRING };
+    let flags = if checked {
+        MF_STRING | MF_CHECKED
+    } else {
+        MF_STRING
+    };
     let _ = AppendMenuW(menu, flags, id, PCWSTR(w.as_ptr()));
 }
 
 pub fn open_config_in_editor() {
     if let Some(path) = Config::ensure_default_file() {
         let op: Vec<u16> = "open\0".encode_utf16().collect();
-        let file: Vec<u16> = path.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
+        let file: Vec<u16> = path
+            .to_string_lossy()
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
         unsafe {
             ShellExecuteW(
                 None,
@@ -132,7 +157,15 @@ pub fn is_autostart_enabled() -> bool {
     let val: Vec<u16> = RUN_VALUE.encode_utf16().chain(std::iter::once(0)).collect();
     unsafe {
         let mut hkey = Default::default();
-        if RegOpenKeyExW(HKEY_CURRENT_USER, PCWSTR(sub.as_ptr()), 0, KEY_READ, &mut hkey).is_err() {
+        if RegOpenKeyExW(
+            HKEY_CURRENT_USER,
+            PCWSTR(sub.as_ptr()),
+            0,
+            KEY_READ,
+            &mut hkey,
+        )
+        .is_err()
+        {
             return false;
         }
         let ok = RegQueryValueExW(hkey, PCWSTR(val.as_ptr()), None, None, None, None).is_ok();
@@ -147,7 +180,15 @@ pub fn toggle_autostart() {
     let enable = !is_autostart_enabled();
     unsafe {
         let mut hkey = Default::default();
-        if RegOpenKeyExW(HKEY_CURRENT_USER, PCWSTR(sub.as_ptr()), 0, KEY_WRITE, &mut hkey).is_err() {
+        if RegOpenKeyExW(
+            HKEY_CURRENT_USER,
+            PCWSTR(sub.as_ptr()),
+            0,
+            KEY_WRITE,
+            &mut hkey,
+        )
+        .is_err()
+        {
             return;
         }
         if enable {
@@ -179,7 +220,7 @@ fn build_fathom_tray_icon() -> HICON {
             if dist_diamond <= 7.2 {
                 // #7aa2f7 accent diamond in BGRA
                 pixels[y * size + x] = 0xFF_7A_A2_F7;
-            } else if dist_box <= 13.5 && dist_box >= 11.2 {
+            } else if (11.2..=13.5).contains(&dist_box) {
                 pixels[y * size + x] = 0xFF_A9_B1_D6;
             } else if dist_box < 11.2 {
                 pixels[y * size + x] = 0xEE_1A_1B_26;
@@ -188,7 +229,13 @@ fn build_fathom_tray_icon() -> HICON {
     }
 
     unsafe {
-        let color_bmp = CreateBitmap(size as i32, size as i32, 1, 32, Some(pixels.as_ptr() as *const _));
+        let color_bmp = CreateBitmap(
+            size as i32,
+            size as i32,
+            1,
+            32,
+            Some(pixels.as_ptr() as *const _),
+        );
         let mask_dc = CreateCompatibleDC(None);
         let mask_bmp = CreateBitmap(size as i32, size as i32, 1, 1, None);
         let old = SelectObject(mask_dc, mask_bmp);

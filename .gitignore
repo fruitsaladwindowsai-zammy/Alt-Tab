@@ -2,7 +2,17 @@
 *.png
 !docs/*.png
 !docs/*.gif
+!docs/src/assets/*.png
+!docs/src/assets/*.gif
+!docs/src/assets/*.svg
+!wiki/assets/*.png
+!wiki/assets/*.gif
+!wiki/assets/*.svg
 docs/frames/
+docs/book/
+website/
 *.log
 nuget.exe
 *.nupkg
+dist/
+*.zip

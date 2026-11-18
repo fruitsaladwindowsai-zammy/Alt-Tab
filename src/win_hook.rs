@@ -86,7 +86,13 @@ impl HooksGuard {
                 HOOK_THREAD_ID.store(tid, Ordering::SeqCst);
                 let hmod = GetModuleHandleW(None).ok();
                 let kb_hook = match hmod {
-                    Some(m) => SetWindowsHookExW(WH_KEYBOARD_LL, Some(ll_keyboard_proc), HINSTANCE::from(m), 0).ok(),
+                    Some(m) => SetWindowsHookExW(
+                        WH_KEYBOARD_LL,
+                        Some(ll_keyboard_proc),
+                        HINSTANCE::from(m),
+                        0,
+                    )
+                    .ok(),
                     None => SetWindowsHookExW(WH_KEYBOARD_LL, Some(ll_keyboard_proc), None, 0).ok(),
                 };
                 let _ = ready_tx.send(kb_hook.is_some());
@@ -128,7 +134,10 @@ impl HooksGuard {
             }
         }
 
-        Self { win_hooks, kb_thread }
+        Self {
+            win_hooks,
+            kb_thread,
+        }
     }
 }
 
@@ -149,11 +158,7 @@ impl Drop for HooksGuard {
     }
 }
 
-unsafe extern "system" fn ll_keyboard_proc(
-    code: i32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
+unsafe extern "system" fn ll_keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     if code < 0 {
         return CallNextHookEx(None, code, wparam, lparam);
     }
@@ -183,9 +188,8 @@ unsafe extern "system" fn ll_keyboard_proc(
     }
 
     if is_down {
-        let alt = ALT_TRACKED_DOWN.load(Ordering::Relaxed)
-            || is_alt_down()
-            || (kb.flags.0 & 0x20) != 0; // LLKHF_ALTDOWN = 0x20
+        let alt =
+            ALT_TRACKED_DOWN.load(Ordering::Relaxed) || is_alt_down() || (kb.flags.0 & 0x20) != 0; // LLKHF_ALTDOWN = 0x20
         let ctrl = is_ctrl_down();
         let win = is_win_down();
 
@@ -193,7 +197,12 @@ unsafe extern "system" fn ll_keyboard_proc(
         if vk == VK_TAB.0 && alt && !ctrl && !win {
             TAB_SWALLOWED.store(true, Ordering::Relaxed);
             let delta: isize = if is_shift_down() { -1 } else { 1 };
-            let _ = PostMessageW(target, WM_FATHOM_CHORD_STEP, WPARAM(delta as usize), LPARAM(0));
+            let _ = PostMessageW(
+                target,
+                WM_FATHOM_CHORD_STEP,
+                WPARAM(delta as usize),
+                LPARAM(0),
+            );
             return LRESULT(1);
         }
 
@@ -207,12 +216,18 @@ unsafe extern "system" fn ll_keyboard_proc(
 
         // During the 90 ms pre-reveal hold window, intercept navigation keys before the
         // foreground app sees them and forward to Winscroller.
-        if FATHOM_OPEN.load(Ordering::Relaxed) && !FATHOM_REVEALED.load(Ordering::Relaxed) {
-            if vk == VK_ESCAPE.0 || vk == VK_SPACE.0 || vk == VK_TAB.0 {
-                let shift_bit = if is_shift_down() { 1usize } else { 0 };
-                let _ = PostMessageW(target, WM_FATHOM_PRE_REVEAL_KEY, WPARAM(vk as usize), LPARAM(shift_bit as isize));
-                return LRESULT(1);
-            }
+        if FATHOM_OPEN.load(Ordering::Relaxed)
+            && !FATHOM_REVEALED.load(Ordering::Relaxed)
+            && (vk == VK_ESCAPE.0 || vk == VK_SPACE.0 || vk == VK_TAB.0)
+        {
+            let shift_bit = if is_shift_down() { 1usize } else { 0 };
+            let _ = PostMessageW(
+                target,
+                WM_FATHOM_PRE_REVEAL_KEY,
+                WPARAM(vk as usize),
+                LPARAM(shift_bit as isize),
+            );
+            return LRESULT(1);
         }
     }
 
@@ -239,13 +254,28 @@ unsafe extern "system" fn win_event_proc(
     let target_hwnd = HWND(target as *mut _);
     match event {
         EVENT_SYSTEM_FOREGROUND => {
-            let _ = PostMessageW(target_hwnd, WM_FATHOM_FOCUS_CHANGED, WPARAM(raw as usize), LPARAM(0));
+            let _ = PostMessageW(
+                target_hwnd,
+                WM_FATHOM_FOCUS_CHANGED,
+                WPARAM(raw as usize),
+                LPARAM(0),
+            );
         }
         EVENT_OBJECT_SHOW => {
-            let _ = PostMessageW(target_hwnd, WM_FATHOM_WINDOW_OPENED, WPARAM(raw as usize), LPARAM(0));
+            let _ = PostMessageW(
+                target_hwnd,
+                WM_FATHOM_WINDOW_OPENED,
+                WPARAM(raw as usize),
+                LPARAM(0),
+            );
         }
         EVENT_OBJECT_DESTROY => {
-            let _ = PostMessageW(target_hwnd, WM_FATHOM_WINDOW_CLOSED, WPARAM(raw as usize), LPARAM(0));
+            let _ = PostMessageW(
+                target_hwnd,
+                WM_FATHOM_WINDOW_CLOSED,
+                WPARAM(raw as usize),
+                LPARAM(0),
+            );
         }
         _ => {}
     }

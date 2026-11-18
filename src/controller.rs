@@ -84,8 +84,15 @@ impl AnimValue {
 #[derive(Clone, Debug)]
 pub enum Action {
     None,
-    Commit { hwnd: isize, on_current_desktop: bool, workspace_key: String, minimized: bool },
-    SwitchWorkspace { workspace_key: String },
+    Commit {
+        hwnd: isize,
+        on_current_desktop: bool,
+        workspace_key: String,
+        minimized: bool,
+    },
+    SwitchWorkspace {
+        workspace_key: String,
+    },
     Cancel,
 }
 
@@ -159,7 +166,12 @@ impl Controller {
             slots: Vec::new(),
             groups: Vec::new(),
             monitors: HashMap::new(),
-            target_monitor: Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1080.0 },
+            target_monitor: Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 1920.0,
+                height: 1080.0,
+            },
             selected_index: None,
             hovered_plane: None,
             hovered_tile: None,
@@ -196,6 +208,7 @@ impl Controller {
             .unwrap_or(-1)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn open_field(
         &mut self,
         mode: SwitchMode,
@@ -218,7 +231,9 @@ impl Controller {
         }
 
         self.recency.seed_from_candidates(candidates, now_ms);
-        let entries = self.recency.build_field(candidates, now_ms, fallback_active);
+        let entries = self
+            .recency
+            .build_field(candidates, now_ms, fallback_active);
 
         let min_windows = if mode == SwitchMode::Hold && !self.config.open_on_single {
             2
@@ -285,7 +300,8 @@ impl Controller {
 
     pub fn notify_wallpaper_ready(&mut self, now_ms: f64) {
         self.wallpaper_opacity = AnimValue::snap(0.0);
-        self.wallpaper_opacity.animate_to(1.0, now_ms, WALLPAPER_ANIM_MS);
+        self.wallpaper_opacity
+            .animate_to(1.0, now_ms, WALLPAPER_ANIM_MS);
     }
 
     pub fn tick_animations(&mut self, now_ms: u64) -> bool {
@@ -309,10 +325,11 @@ impl Controller {
         if !self.opened {
             return None;
         }
-        if self.mode == SwitchMode::Hold && !self.revealed {
-            if now_ms.saturating_sub(self.opened_at_ms) >= REVEAL_DELAY_MS {
-                self.reveal_now(now_ms as f64);
-            }
+        if self.mode == SwitchMode::Hold
+            && !self.revealed
+            && now_ms.saturating_sub(self.opened_at_ms) >= REVEAL_DELAY_MS
+        {
+            self.reveal_now(now_ms as f64);
         }
         if self.mode == SwitchMode::Hold
             && now_ms.saturating_sub(self.last_input_ms) >= WATCHDOG_TIMEOUT_MS
@@ -343,8 +360,10 @@ impl Controller {
             let target_slot = self.slots[idx] as f64;
             let target_depth = self.field[idx].depth.clamp(0.0, 8.0);
             if self.camera_animated {
-                self.camera_slot.animate_to(target_slot, now_ms, CAMERA_ANIM_MS);
-                self.scene_depth.animate_to(target_depth, now_ms, DEPTH_ANIM_MS);
+                self.camera_slot
+                    .animate_to(target_slot, now_ms, CAMERA_ANIM_MS);
+                self.scene_depth
+                    .animate_to(target_depth, now_ms, DEPTH_ANIM_MS);
             } else {
                 self.camera_slot = AnimValue::snap(target_slot);
                 self.scene_depth = AnimValue::snap(target_depth);
@@ -391,7 +410,9 @@ impl Controller {
         if !self.opened || self.order.is_empty() {
             return false;
         }
-        if let Some(target) = field::neighbor_workspace(&self.groups, &self.order, self.selected_index, direction) {
+        if let Some(target) =
+            field::neighbor_workspace(&self.groups, &self.order, self.selected_index, direction)
+        {
             return self.jump_to(target, now_ms);
         }
         false
@@ -499,7 +520,10 @@ impl Controller {
             return Action::None;
         }
         let target = self.selected_entry().cloned();
-        let closed = target.as_ref().map(|e| self.closed.contains(&e.hwnd)).unwrap_or(true);
+        let closed = target
+            .as_ref()
+            .map(|e| self.closed.contains(&e.hwnd))
+            .unwrap_or(true);
         self.dismiss();
         if let Some(entry) = target {
             if !closed {
@@ -530,7 +554,9 @@ impl Controller {
             return Action::Cancel;
         };
         self.dismiss();
-        Action::SwitchWorkspace { workspace_key: ws_key }
+        Action::SwitchWorkspace {
+            workspace_key: ws_key,
+        }
     }
 
     pub fn clear_drag(&mut self) {
@@ -637,7 +663,11 @@ impl Controller {
     pub fn shown_workspace_count(&self) -> usize {
         self.groups
             .iter()
-            .filter(|g| g.entries.iter().any(|&idx| self.slots.get(idx).copied().unwrap_or(-1) >= 0))
+            .filter(|g| {
+                g.entries
+                    .iter()
+                    .any(|&idx| self.slots.get(idx).copied().unwrap_or(-1) >= 0)
+            })
             .count()
     }
 }
@@ -696,7 +726,12 @@ mod tests {
             &cands,
             &[],
             vec![],
-            Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1080.0 },
+            Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 1920.0,
+                height: 1080.0
+            },
             Some(1),
             1000,
         ));
@@ -761,7 +796,12 @@ mod tests {
         }];
         let mon = vec![MonitorDesc {
             name: "DISPLAY1".into(),
-            rect: Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1080.0 },
+            rect: Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 1920.0,
+                height: 1080.0,
+            },
             focused: true,
         }];
         assert!(ctrl.open_field(
@@ -770,7 +810,12 @@ mod tests {
             &cands,
             &ws,
             mon,
-            Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1080.0 },
+            Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 1920.0,
+                height: 1080.0
+            },
             Some(101),
             1000,
         ));

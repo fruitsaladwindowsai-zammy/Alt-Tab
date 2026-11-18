@@ -66,9 +66,12 @@ pub fn clean_app_name(raw_id: &str, friendly_name: &str) -> String {
     if id.is_empty() {
         return "App".to_string();
     }
-    let stem = id.strip_suffix(".exe").or_else(|| id.strip_suffix(".EXE")).unwrap_or(id);
+    let stem = id
+        .strip_suffix(".exe")
+        .or_else(|| id.strip_suffix(".EXE"))
+        .unwrap_or(id);
     let last = if stem.contains('.') && stem.split('.').count() > 2 {
-        stem.split('.').last().unwrap_or(stem)
+        stem.split('.').next_back().unwrap_or(stem)
     } else {
         stem
     };
@@ -166,7 +169,11 @@ pub fn workspace_label(name: &str, id: Option<i64>) -> String {
             .strip_prefix("special:")
             .or_else(|| trimmed.strip_prefix("special"))
             .unwrap_or(trimmed);
-        return if rest.is_empty() { "scratchpad".to_string() } else { rest.to_string() };
+        return if rest.is_empty() {
+            "scratchpad".to_string()
+        } else {
+            rest.to_string()
+        };
     }
     if !trimmed.is_empty() {
         return trimmed.strip_prefix("name:").unwrap_or(trimmed).to_string();
@@ -188,11 +195,8 @@ pub fn matches_query(entry: &WindowEntry, query: &str) -> bool {
         return true;
     }
     let ws = workspace_label(&entry.workspace_name, entry.workspace_id);
-    let haystack = format!(
-        "{} {} {} {}",
-        entry.app_name, entry.app_id, entry.title, ws
-    )
-    .to_ascii_lowercase();
+    let haystack =
+        format!("{} {} {} {}", entry.app_name, entry.app_id, entry.title, ws).to_ascii_lowercase();
     norm.split(' ').all(|tok| haystack.contains(tok))
 }
 
@@ -250,7 +254,11 @@ pub fn step(order: &[usize], current: Option<usize>, delta: isize, wrap: bool) -
     Some(order[next as usize])
 }
 
-pub fn reselect(order: &[usize], current: Option<usize>, previous_order: &[usize]) -> Option<usize> {
+pub fn reselect(
+    order: &[usize],
+    current: Option<usize>,
+    previous_order: &[usize],
+) -> Option<usize> {
     if order.is_empty() {
         return None;
     }
@@ -284,7 +292,10 @@ fn workspace_rank(group: &WorkspaceGroup) -> u8 {
     }
 }
 
-pub fn workspace_groups(entries: &[WindowEntry], extra: &[WorkspaceDescriptor]) -> Vec<WorkspaceGroup> {
+pub fn workspace_groups(
+    entries: &[WindowEntry],
+    extra: &[WorkspaceDescriptor],
+) -> Vec<WorkspaceGroup> {
     let mut groups: Vec<WorkspaceGroup> = Vec::new();
 
     let ensure_group = |groups: &mut Vec<WorkspaceGroup>,
@@ -317,11 +328,20 @@ pub fn workspace_groups(entries: &[WindowEntry], extra: &[WorkspaceDescriptor]) 
     };
 
     for desc in extra {
-        ensure_group(&mut groups, &desc.key, desc.id, &desc.name, &desc.monitor, desc.on_screen);
+        ensure_group(
+            &mut groups,
+            &desc.key,
+            desc.id,
+            &desc.name,
+            &desc.monitor,
+            desc.on_screen,
+        );
     }
 
     for (i, entry) in entries.iter().enumerate() {
-        let on_screen = extra.iter().any(|d| d.key == entry.workspace_key && d.on_screen);
+        let on_screen = extra
+            .iter()
+            .any(|d| d.key == entry.workspace_key && d.on_screen);
         let pos = ensure_group(
             &mut groups,
             &entry.workspace_key,
@@ -342,7 +362,9 @@ pub fn workspace_groups(entries: &[WindowEntry], extra: &[WorkspaceDescriptor]) 
         if ra == 0 && a.id != b.id {
             return a.id.cmp(&b.id);
         }
-        a.label.to_ascii_lowercase().cmp(&b.label.to_ascii_lowercase())
+        a.label
+            .to_ascii_lowercase()
+            .cmp(&b.label.to_ascii_lowercase())
     });
 
     groups
@@ -354,7 +376,11 @@ pub fn group_of(groups: &[WorkspaceGroup], index: Option<usize>) -> Option<usize
 }
 
 pub fn group_front(group: &WorkspaceGroup, order: &[usize]) -> Option<usize> {
-    group.entries.iter().copied().find(|idx| order.contains(idx))
+    group
+        .entries
+        .iter()
+        .copied()
+        .find(|idx| order.contains(idx))
 }
 
 pub fn neighbor_workspace(
@@ -377,7 +403,11 @@ pub fn neighbor_workspace(
     current
 }
 
-pub fn workspace_by_number(groups: &[WorkspaceGroup], order: &[usize], number: i64) -> Option<usize> {
+pub fn workspace_by_number(
+    groups: &[WorkspaceGroup],
+    order: &[usize],
+    number: i64,
+) -> Option<usize> {
     for group in groups {
         if !group.special && group.id == Some(number) {
             if let Some(front) = group_front(group, order) {
@@ -392,8 +422,17 @@ pub const PIXELS_PER_STEP: f64 = 60.0;
 pub const ANGLE_PER_STEP: f64 = 120.0;
 
 pub fn wheel_steps(carry: f64, angle_delta: f64, pixel_delta: f64) -> (isize, f64) {
-    let unit = if pixel_delta != 0.0 { PIXELS_PER_STEP } else { ANGLE_PER_STEP };
-    let total = carry + if pixel_delta != 0.0 { pixel_delta } else { angle_delta };
+    let unit = if pixel_delta != 0.0 {
+        PIXELS_PER_STEP
+    } else {
+        ANGLE_PER_STEP
+    };
+    let total = carry
+        + if pixel_delta != 0.0 {
+            pixel_delta
+        } else {
+            angle_delta
+        };
     let steps = if total <= -unit {
         (total / unit).ceil() as isize
     } else if total >= unit {

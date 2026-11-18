@@ -1,29 +1,29 @@
 //! Windows OS integration: window enumeration, Virtual Desktops, monitors, icons, wallpaper, and focusing.
 
+use crate::controller::MonitorDesc;
 use crate::field::WorkspaceDescriptor;
 use crate::layout::Rect;
 use crate::palette::{Rgba, ThemeSource};
 use crate::recency::WindowCandidate;
-use crate::controller::MonitorDesc;
 use std::collections::HashSet;
 use std::ffi::{c_void, OsString};
 use std::os::windows::ffi::OsStringExt;
 use std::path::Path;
-use windows::core::{GUID, HRESULT, IUnknown, Interface, PCWSTR, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, HANDLE, HWND, LPARAM, POINT, RECT, WPARAM};
+use windows::core::{IUnknown, Interface, GUID, HRESULT, PCWSTR, PWSTR};
+use windows::Win32::Foundation::{CloseHandle, BOOL, HANDLE, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
-    DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
-    DWM_CLOAKED_APP, DWM_CLOAKED_INHERITED, DWM_CLOAKED_SHELL,
+    DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS, DWM_CLOAKED_APP,
+    DWM_CLOAKED_INHERITED, DWM_CLOAKED_SHELL,
 };
 use windows::Win32::Graphics::Gdi::{
-    EnumDisplayMonitors, GetMonitorInfoW, MonitorFromPoint, MonitorFromWindow,
-    HDC, HMONITOR, MONITORINFOEXW, MONITOR_DEFAULTTONEAREST,
+    EnumDisplayMonitors, GetMonitorInfoW, MonitorFromPoint, MonitorFromWindow, HDC, HMONITOR,
+    MONITORINFOEXW, MONITOR_DEFAULTTONEAREST,
 };
 use windows::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY};
 use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
 use windows::Win32::System::Registry::{
-    RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_CURRENT_USER,
-    KEY_READ, REG_BINARY, REG_DWORD, REG_SZ,
+    RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_CURRENT_USER, KEY_READ, REG_BINARY,
+    REG_DWORD, REG_SZ,
 };
 use windows::Win32::System::RemoteDesktop::ProcessIdToSessionId;
 use windows::Win32::System::Threading::{
@@ -43,14 +43,14 @@ use windows::Win32::UI::Shell::{
     SHGFI_ICON, SHGFI_LARGEICON,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    AllowSetForegroundWindow, BringWindowToTop, EnumChildWindows, EnumWindows,
-    GetAncestor, GetClassLongPtrW, GetClassNameW, GetCursorPos, GetForegroundWindow, GetWindow,
+    AllowSetForegroundWindow, BringWindowToTop, EnumChildWindows, EnumWindows, GetAncestor,
+    GetClassLongPtrW, GetClassNameW, GetCursorPos, GetForegroundWindow, GetWindow,
     GetWindowLongPtrW, GetWindowPlacement, GetWindowRect, GetWindowTextLengthW, GetWindowTextW,
     GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, SendMessageTimeoutW,
-    SetForegroundWindow, ShowWindow, SystemParametersInfoW, ASFW_ANY, GA_ROOTOWNER,
-    GCLP_HICON, GCLP_HICONSM, GW_OWNER, HICON, ICON_BIG, ICON_SMALL2, SMTO_ABORTIFHUNG,
-    SPI_GETDESKWALLPAPER, SW_RESTORE, SW_SHOWNORMAL, WINDOWPLACEMENT, WS_EX_APPWINDOW,
-    WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    SetForegroundWindow, ShowWindow, SystemParametersInfoW, ASFW_ANY, GA_ROOTOWNER, GCLP_HICON,
+    GCLP_HICONSM, GW_OWNER, HICON, ICON_BIG, ICON_SMALL2, SMTO_ABORTIFHUNG, SPI_GETDESKWALLPAPER,
+    SW_RESTORE, SW_SHOWNORMAL, WINDOWPLACEMENT, WS_EX_APPWINDOW, WS_EX_NOACTIVATE,
+    WS_EX_TOOLWINDOW,
 };
 
 pub fn enable_dpi_awareness() {
@@ -85,19 +85,36 @@ pub fn relaunch_elevated(extra_args: &[String]) -> bool {
         return false;
     };
     let verb: Vec<u16> = "runas\0".encode_utf16().collect();
-    let file: Vec<u16> = exe.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
+    let file: Vec<u16> = exe
+        .to_string_lossy()
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     let params_str = extra_args
         .iter()
-        .map(|a| if a.contains(' ') { format!("\"{a}\"") } else { a.clone() })
+        .map(|a| {
+            if a.contains(' ') {
+                format!("\"{a}\"")
+            } else {
+                a.clone()
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ");
-    let params: Vec<u16> = params_str.encode_utf16().chain(std::iter::once(0)).collect();
+    let params: Vec<u16> = params_str
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     let res = unsafe {
         ShellExecuteW(
             None,
             PCWSTR(verb.as_ptr()),
             PCWSTR(file.as_ptr()),
-            if params_str.is_empty() { PCWSTR::null() } else { PCWSTR(params.as_ptr()) },
+            if params_str.is_empty() {
+                PCWSTR::null()
+            } else {
+                PCWSTR(params.as_ptr())
+            },
             None,
             SW_SHOWNORMAL,
         )
@@ -146,7 +163,9 @@ pub fn current_wallpaper_path() -> Option<String> {
     };
     if ok {
         let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
-        let path = OsString::from_wide(&buf[..len]).to_string_lossy().into_owned();
+        let path = OsString::from_wide(&buf[..len])
+            .to_string_lossy()
+            .into_owned();
         if !path.is_empty() && Path::new(&path).exists() {
             return Some(path);
         }
@@ -157,8 +176,8 @@ pub fn current_wallpaper_path() -> Option<String> {
         }
     }
     if let Some(appdata) = std::env::var_os("APPDATA") {
-        let transcoded = Path::new(&appdata)
-            .join("Microsoft\\Windows\\Themes\\TranscodedWallpaper");
+        let transcoded =
+            Path::new(&appdata).join("Microsoft\\Windows\\Themes\\TranscodedWallpaper");
         if transcoded.exists() {
             return Some(transcoded.to_string_lossy().into_owned());
         }
@@ -221,8 +240,10 @@ impl VirtualDesktopSnapshot {
             .or_else(|| reg_read_binary(HKEY_CURRENT_USER, &session_base, "VirtualDesktopIDs"))
             .map(|bytes| {
                 bytes
-                    .chunks_exact(16)
-                    .filter_map(parse_guid_bytes)
+                    .as_chunks::<16>()
+                    .0
+                    .iter()
+                    .filter_map(|c| parse_guid_bytes(c))
                     .collect()
             })
             .unwrap_or_default();
@@ -236,7 +257,14 @@ impl VirtualDesktopSnapshot {
         let ordered = guids
             .iter()
             .enumerate()
-            .map(|(i, &guid)| Self::build_info(base, guid, i + 1, current_guid.map(|c| c == guid).unwrap_or(i == 0)))
+            .map(|(i, &guid)| {
+                Self::build_info(
+                    base,
+                    guid,
+                    i + 1,
+                    current_guid.map(|c| c == guid).unwrap_or(i == 0),
+                )
+            })
             .collect();
 
         Self {
@@ -245,7 +273,12 @@ impl VirtualDesktopSnapshot {
         }
     }
 
-    fn build_info(base: &str, guid: GUID, index_one_based: usize, is_current: bool) -> VirtualDesktopInfo {
+    fn build_info(
+        base: &str,
+        guid: GUID,
+        index_one_based: usize,
+        is_current: bool,
+    ) -> VirtualDesktopInfo {
         let guid_str = format_guid_braced(guid);
         let custom_name = if guid != GUID::zeroed() {
             reg_read_sz(
@@ -299,9 +332,7 @@ pub fn enumerate_monitors() -> (Vec<MonitorDesc>, Rect) {
             let raw_name = OsString::from_wide(&info.szDevice[..len])
                 .to_string_lossy()
                 .into_owned();
-            let short = raw_name
-                .trim_start_matches("\\\\.\\")
-                .to_string();
+            let short = raw_name.trim_start_matches("\\\\.\\").to_string();
             state.monitors.push(MonitorDesc {
                 name: short,
                 rect: Rect {
@@ -360,16 +391,12 @@ pub fn enumerate_monitors() -> (Vec<MonitorDesc>, Rect) {
                 height: (r.bottom - r.top).max(1) as f64,
             }
         } else {
-            state
-                .monitors
-                .first()
-                .map(|m| m.rect)
-                .unwrap_or(Rect {
-                    x: 0.0,
-                    y: 0.0,
-                    width: 1920.0,
-                    height: 1080.0,
-                })
+            state.monitors.first().map(|m| m.rect).unwrap_or(Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 1920.0,
+                height: 1080.0,
+            })
         }
     };
 
@@ -382,7 +409,11 @@ pub fn enumerate_windows(
     vd_snapshot: &VirtualDesktopSnapshot,
     monitors: &[MonitorDesc],
     urgent_hwnds: &HashSet<isize>,
-) -> (Vec<WindowCandidate>, Vec<WorkspaceDescriptor>, Option<isize>) {
+) -> (
+    Vec<WindowCandidate>,
+    Vec<WorkspaceDescriptor>,
+    Option<isize>,
+) {
     struct EnumState {
         overlay: isize,
         raw_hwnds: Vec<HWND>,
@@ -537,7 +568,8 @@ pub fn enumerate_windows(
             if let Some(g) = w.desktop_guid {
                 if !ordered_desktops.iter().any(|d| d.guid == g) {
                     let idx = ordered_desktops.len() + 1;
-                    ordered_desktops.push(VirtualDesktopSnapshot::build_info(vd_base, g, idx, false));
+                    ordered_desktops
+                        .push(VirtualDesktopSnapshot::build_info(vd_base, g, idx, false));
                 }
             }
         }
@@ -612,7 +644,8 @@ pub fn is_alt_tab_window(hwnd: HWND, vdm: Option<&IVirtualDesktopManager>) -> bo
         if !IsWindow(hwnd).as_bool() || !IsWindowVisible(hwnd).as_bool() {
             return false;
         }
-        let ex_style = GetWindowLongPtrW(hwnd, windows::Win32::UI::WindowsAndMessaging::GWL_EXSTYLE) as u32;
+        let ex_style =
+            GetWindowLongPtrW(hwnd, windows::Win32::UI::WindowsAndMessaging::GWL_EXSTYLE) as u32;
         if (ex_style & WS_EX_TOOLWINDOW.0) != 0 && (ex_style & WS_EX_APPWINDOW.0) == 0 {
             return false;
         }
@@ -627,7 +660,10 @@ pub fn is_alt_tab_window(hwnd: HWND, vdm: Option<&IVirtualDesktopManager>) -> bo
                 return false;
             }
             let root_owner = GetAncestor(hwnd, GA_ROOTOWNER);
-            if root_owner != hwnd && !root_owner.0.is_null() && IsWindowVisible(root_owner).as_bool() {
+            if root_owner != hwnd
+                && !root_owner.0.is_null()
+                && IsWindowVisible(root_owner).as_bool()
+            {
                 return false;
             }
         }
@@ -717,10 +753,20 @@ fn process_image_path(pid: u32) -> Option<String> {
         let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
         let mut buf = vec![0u16; 1024];
         let mut len = buf.len() as u32;
-        let ok = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buf.as_mut_ptr()), &mut len).is_ok();
+        let ok = QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_WIN32,
+            PWSTR(buf.as_mut_ptr()),
+            &mut len,
+        )
+        .is_ok();
         let _ = windows::Win32::Foundation::CloseHandle(handle);
         if ok && len > 0 {
-            Some(OsString::from_wide(&buf[..len as usize]).to_string_lossy().into_owned())
+            Some(
+                OsString::from_wide(&buf[..len as usize])
+                    .to_string_lossy()
+                    .into_owned(),
+            )
         } else {
             None
         }
@@ -735,7 +781,11 @@ fn resolve_window_process(hwnd: HWND, class_name: &str) -> (u32, String) {
     let mut path = process_image_path(pid).unwrap_or_default();
 
     // UWP windows are hosted inside ApplicationFrameHost.exe; inspect the child CoreWindow for the real app.
-    if class_name == "ApplicationFrameWindow" || path.to_ascii_lowercase().ends_with("applicationframehost.exe") {
+    if class_name == "ApplicationFrameWindow"
+        || path
+            .to_ascii_lowercase()
+            .ends_with("applicationframehost.exe")
+    {
         struct ChildPid {
             host_pid: u32,
             real_pid: Option<u32>,
@@ -750,9 +800,16 @@ fn resolve_window_process(hwnd: HWND, class_name: &str) -> (u32, String) {
             }
             BOOL(1)
         }
-        let mut state = ChildPid { host_pid: pid, real_pid: None };
+        let mut state = ChildPid {
+            host_pid: pid,
+            real_pid: None,
+        };
         unsafe {
-            let _ = EnumChildWindows(hwnd, Some(find_child), LPARAM(&mut state as *mut _ as isize));
+            let _ = EnumChildWindows(
+                hwnd,
+                Some(find_child),
+                LPARAM(&mut state as *mut _ as isize),
+            );
         }
         if let Some(real_pid) = state.real_pid {
             if let Some(real_path) = process_image_path(real_pid) {
@@ -912,7 +969,9 @@ pub fn focus_target_window(
         }
         if !on_current_desktop {
             let vd = VirtualDesktopSnapshot::read();
-            if let (Some(curr), Some(target)) = (vd.current_index(), vd.index_of_key(target_workspace_key)) {
+            if let (Some(curr), Some(target)) =
+                (vd.current_index(), vd.index_of_key(target_workspace_key))
+            {
                 let delta = target as isize - curr as isize;
                 if delta != 0 {
                     switch_virtual_desktop_steps(delta);
@@ -933,7 +992,8 @@ pub fn focus_target_window(
             0
         };
         let my_tid = GetCurrentThreadId();
-        let attached = fg_tid != 0 && fg_tid != my_tid && AttachThreadInput(my_tid, fg_tid, true).as_bool();
+        let attached =
+            fg_tid != 0 && fg_tid != my_tid && AttachThreadInput(my_tid, fg_tid, true).as_bool();
         let _ = BringWindowToTop(hwnd);
         let _ = SetForegroundWindow(hwnd);
         if attached {
@@ -962,7 +1022,8 @@ fn switch_virtual_desktop_steps(delta: isize) {
 
 pub fn switch_virtual_desktop_by_key(target_workspace_key: &str) {
     let vd = VirtualDesktopSnapshot::read();
-    if let (Some(curr), Some(target)) = (vd.current_index(), vd.index_of_key(target_workspace_key)) {
+    if let (Some(curr), Some(target)) = (vd.current_index(), vd.index_of_key(target_workspace_key))
+    {
         let delta = target as isize - curr as isize;
         if delta != 0 {
             switch_virtual_desktop_steps(delta);
@@ -1035,13 +1096,12 @@ pub fn move_window_to_desktop_key(
     target_workspace_key: &str,
     vdm: Option<&IVirtualDesktopManager>,
 ) -> bool {
-    let target_guid = parse_workspace_key_guid(target_workspace_key)
-        .or_else(|| {
-            let vd = VirtualDesktopSnapshot::read();
-            vd.index_of_key(target_workspace_key)
-                .and_then(|idx| vd.ordered.get(idx))
-                .map(|d| d.guid)
-        });
+    let target_guid = parse_workspace_key_guid(target_workspace_key).or_else(|| {
+        let vd = VirtualDesktopSnapshot::read();
+        vd.index_of_key(target_workspace_key)
+            .and_then(|idx| vd.ordered.get(idx))
+            .map(|d| d.guid)
+    });
     let Some(guid) = target_guid else {
         return false;
     };
@@ -1054,7 +1114,13 @@ fn parse_workspace_key_guid(key: &str) -> Option<GUID> {
 }
 
 fn parse_guid_str(s: &str) -> Option<GUID> {
-    let clean: String = s.trim().trim_start_matches('{').trim_end_matches('}').chars().filter(|c| *c != '-').collect();
+    let clean: String = s
+        .trim()
+        .trim_start_matches('{')
+        .trim_end_matches('}')
+        .chars()
+        .filter(|c| *c != '-')
+        .collect();
     if clean.len() != 32 {
         return None;
     }
@@ -1101,7 +1167,8 @@ pub fn force_focus_overlay(hwnd: HWND) {
             0
         };
         let my_tid = GetCurrentThreadId();
-        let attached = fg_tid != 0 && fg_tid != my_tid && AttachThreadInput(my_tid, fg_tid, true).as_bool();
+        let attached =
+            fg_tid != 0 && fg_tid != my_tid && AttachThreadInput(my_tid, fg_tid, true).as_bool();
         let _ = BringWindowToTop(hwnd);
         let _ = SetForegroundWindow(hwnd);
         if attached {
@@ -1112,7 +1179,10 @@ pub fn force_focus_overlay(hwnd: HWND) {
 
 pub fn reg_read_dword(root: HKEY, subkey: &str, value_name: &str) -> Option<u32> {
     let sub: Vec<u16> = subkey.encode_utf16().chain(std::iter::once(0)).collect();
-    let val: Vec<u16> = value_name.encode_utf16().chain(std::iter::once(0)).collect();
+    let val: Vec<u16> = value_name
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     unsafe {
         let mut hkey = HKEY::default();
         if RegOpenKeyExW(root, PCWSTR(sub.as_ptr()), 0, KEY_READ, &mut hkey).is_err() {
@@ -1131,13 +1201,20 @@ pub fn reg_read_dword(root: HKEY, subkey: &str, value_name: &str) -> Option<u32>
         )
         .is_ok();
         let _ = RegCloseKey(hkey);
-        if ok && kind == REG_DWORD { Some(data) } else { None }
+        if ok && kind == REG_DWORD {
+            Some(data)
+        } else {
+            None
+        }
     }
 }
 
 pub fn reg_read_sz(root: HKEY, subkey: &str, value_name: &str) -> Option<String> {
     let sub: Vec<u16> = subkey.encode_utf16().chain(std::iter::once(0)).collect();
-    let val: Vec<u16> = value_name.encode_utf16().chain(std::iter::once(0)).collect();
+    let val: Vec<u16> = value_name
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     unsafe {
         let mut hkey = HKEY::default();
         if RegOpenKeyExW(root, PCWSTR(sub.as_ptr()), 0, KEY_READ, &mut hkey).is_err() {
@@ -1145,7 +1222,15 @@ pub fn reg_read_sz(root: HKEY, subkey: &str, value_name: &str) -> Option<String>
         }
         let mut size = 0u32;
         let mut kind = Default::default();
-        if RegQueryValueExW(hkey, PCWSTR(val.as_ptr()), None, Some(&mut kind), None, Some(&mut size)).is_err()
+        if RegQueryValueExW(
+            hkey,
+            PCWSTR(val.as_ptr()),
+            None,
+            Some(&mut kind),
+            None,
+            Some(&mut size),
+        )
+        .is_err()
             || size == 0
             || kind != REG_SZ
         {
@@ -1167,8 +1252,10 @@ pub fn reg_read_sz(root: HKEY, subkey: &str, value_name: &str) -> Option<String>
             return None;
         }
         let wide: Vec<u16> = buf
-            .chunks_exact(2)
-            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|c| u16::from_le_bytes(*c))
             .take_while(|&c| c != 0)
             .collect();
         Some(OsString::from_wide(&wide).to_string_lossy().into_owned())
@@ -1177,7 +1264,10 @@ pub fn reg_read_sz(root: HKEY, subkey: &str, value_name: &str) -> Option<String>
 
 pub fn reg_read_binary(root: HKEY, subkey: &str, value_name: &str) -> Option<Vec<u8>> {
     let sub: Vec<u16> = subkey.encode_utf16().chain(std::iter::once(0)).collect();
-    let val: Vec<u16> = value_name.encode_utf16().chain(std::iter::once(0)).collect();
+    let val: Vec<u16> = value_name
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     unsafe {
         let mut hkey = HKEY::default();
         if RegOpenKeyExW(root, PCWSTR(sub.as_ptr()), 0, KEY_READ, &mut hkey).is_err() {
@@ -1185,7 +1275,15 @@ pub fn reg_read_binary(root: HKEY, subkey: &str, value_name: &str) -> Option<Vec
         }
         let mut size = 0u32;
         let mut kind = Default::default();
-        if RegQueryValueExW(hkey, PCWSTR(val.as_ptr()), None, Some(&mut kind), None, Some(&mut size)).is_err()
+        if RegQueryValueExW(
+            hkey,
+            PCWSTR(val.as_ptr()),
+            None,
+            Some(&mut kind),
+            None,
+            Some(&mut size),
+        )
+        .is_err()
             || size == 0
             || kind != REG_BINARY
         {
@@ -1203,7 +1301,11 @@ pub fn reg_read_binary(root: HKEY, subkey: &str, value_name: &str) -> Option<Vec
         )
         .is_ok();
         let _ = RegCloseKey(hkey);
-        if ok { Some(buf) } else { None }
+        if ok {
+            Some(buf)
+        } else {
+            None
+        }
     }
 }
 
@@ -1298,8 +1400,12 @@ unsafe fn vtable_fn(obj: &IUnknown, slot: usize) -> *const c_void {
 }
 
 unsafe fn sp_query_service(sp: &IUnknown, service: &GUID, iid: &GUID) -> Option<IUnknown> {
-    let f: unsafe extern "system" fn(*mut c_void, *const GUID, *const GUID, *mut *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(sp, 3));
+    let f: unsafe extern "system" fn(
+        *mut c_void,
+        *const GUID,
+        *const GUID,
+        *mut *mut c_void,
+    ) -> HRESULT = std::mem::transmute(vtable_fn(sp, 3));
     let mut out: *mut c_void = std::ptr::null_mut();
     if f(sp.as_raw(), service, iid, &mut out).is_ok() && !out.is_null() {
         Some(IUnknown::from_raw(out))
@@ -1312,7 +1418,11 @@ unsafe fn obj_array_count(arr: &IUnknown) -> Option<u32> {
     let f: unsafe extern "system" fn(*mut c_void, *mut u32) -> HRESULT =
         std::mem::transmute(vtable_fn(arr, 3));
     let mut count = 0u32;
-    if f(arr.as_raw(), &mut count).is_ok() { Some(count) } else { None }
+    if f(arr.as_raw(), &mut count).is_ok() {
+        Some(count)
+    } else {
+        None
+    }
 }
 
 unsafe fn obj_array_at(arr: &IUnknown, index: u32, iid: &GUID) -> Option<IUnknown> {
@@ -1380,9 +1490,14 @@ unsafe fn avc_get_view_for_hwnd(avc: &IUnknown, hwnd: HWND) -> Option<IUnknown> 
 
 fn query_internal_vdm() -> Option<(IUnknown, IUnknown)> {
     unsafe {
-        let shell_unk: IUnknown = CoCreateInstance(&CLSID_IMMERSIVE_SHELL, None, CLSCTX_ALL).ok()?;
+        let shell_unk: IUnknown =
+            CoCreateInstance(&CLSID_IMMERSIVE_SHELL, None, CLSCTX_ALL).ok()?;
         let mut sp_raw: *mut c_void = std::ptr::null_mut();
-        if shell_unk.query(&IID_ISERVICE_PROVIDER, &mut sp_raw).is_err() || sp_raw.is_null() {
+        if shell_unk
+            .query(&IID_ISERVICE_PROVIDER, &mut sp_raw)
+            .is_err()
+            || sp_raw.is_null()
+        {
             return None;
         }
         let sp = IUnknown::from_raw(sp_raw);
@@ -1436,7 +1551,11 @@ fn move_window_to_desktop_guid(
         }
 
         if let Some((sp, internal)) = query_internal_vdm() {
-            if let Some(avc) = sp_query_service(&sp, &IID_IAPPLICATION_VIEW_COLLECTION, &IID_IAPPLICATION_VIEW_COLLECTION) {
+            if let Some(avc) = sp_query_service(
+                &sp,
+                &IID_IAPPLICATION_VIEW_COLLECTION,
+                &IID_IAPPLICATION_VIEW_COLLECTION,
+            ) {
                 if let Some(view) = avc_get_view_for_hwnd(&avc, hwnd) {
                     if let Some(arr) = vdm_get_desktops(&internal) {
                         if let Some(count) = obj_array_count(&arr) {

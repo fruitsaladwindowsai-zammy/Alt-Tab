@@ -17,8 +17,13 @@ use windows::Win32::Graphics::Imaging::{
     WICBitmapDitherTypeNone, WICBitmapPaletteTypeMedianCut, WICDecodeMetadataCacheOnLoad,
 };
 use windows::Win32::Storage::Xps::{PrintWindow, PRINT_WINDOW_FLAGS};
-use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED};
-use windows::Win32::UI::WindowsAndMessaging::{DestroyIcon, GetWindowRect, IsIconic, PostMessageW, HICON};
+use windows::Win32::System::Com::{
+    CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
+    COINIT_APARTMENTTHREADED,
+};
+use windows::Win32::UI::WindowsAndMessaging::{
+    DestroyIcon, GetWindowRect, IsIconic, PostMessageW, HICON,
+};
 
 pub const WM_FATHOM_CAPTURE_READY: u32 = 0x8000 + 20;
 pub const WM_FATHOM_WALLPAPER_READY: u32 = 0x8000 + 21;
@@ -93,8 +98,14 @@ impl MediaStore {
 }
 
 pub enum CaptureJob {
-    Window { hwnd: isize },
-    Wallpaper { path: String, max_w: u32, max_h: u32 },
+    Window {
+        hwnd: isize,
+    },
+    Wallpaper {
+        path: String,
+        max_w: u32,
+        max_h: u32,
+    },
 }
 
 pub struct CaptureService {
@@ -162,7 +173,11 @@ impl CaptureService {
             }
         });
 
-        Self { tx, in_flight, store }
+        Self {
+            tx,
+            in_flight,
+            store,
+        }
     }
 
     pub fn request_window(&self, hwnd: isize, now_ms: u64) {
@@ -257,7 +272,9 @@ fn hicon_to_bgra(wic: &IWICImagingFactory, hicon: HICON) -> Option<BgraImage> {
         }
         let stride = w * 4;
         let mut buf = vec![0u8; (stride * h) as usize];
-        converter.CopyPixels(std::ptr::null(), stride, &mut buf).ok()?;
+        converter
+            .CopyPixels(std::ptr::null(), stride, &mut buf)
+            .ok()?;
         Some(BgraImage {
             width: w,
             height: h,
@@ -318,7 +335,9 @@ fn decode_image_file(
 
         let stride = dst_w * 4;
         let mut buf = vec![0u8; (stride * dst_h) as usize];
-        converter.CopyPixels(std::ptr::null(), stride, &mut buf).ok()?;
+        converter
+            .CopyPixels(std::ptr::null(), stride, &mut buf)
+            .ok()?;
         Some(BgraImage {
             width: dst_w,
             height: dst_h,
@@ -387,7 +406,18 @@ fn capture_window_bgra(hwnd: HWND, max_width: u32) -> Option<BgraImage> {
                 let old_dst = SelectObject(dst_dc, dib);
                 SetStretchBltMode(dst_dc, HALFTONE);
                 let blt_ok = if dst_w == src_w && dst_h == src_h {
-                    BitBlt(dst_dc, 0, 0, dst_w as i32, dst_h as i32, src_dc, 0, 0, SRCCOPY).is_ok()
+                    BitBlt(
+                        dst_dc,
+                        0,
+                        0,
+                        dst_w as i32,
+                        dst_h as i32,
+                        src_dc,
+                        0,
+                        0,
+                        SRCCOPY,
+                    )
+                    .is_ok()
                 } else {
                     StretchBlt(
                         dst_dc,
@@ -411,7 +441,7 @@ fn capture_window_bgra(hwnd: HWND, max_width: u32) -> Option<BgraImage> {
                     let mut buf = slice.to_vec();
                     // GDI leaves alpha byte = 0 on opaque windows; normalize to opaque premultiplied BGRA.
                     let mut any_non_black = false;
-                    for px in buf.chunks_exact_mut(4) {
+                    for px in buf.as_chunks_mut::<4>().0 {
                         if px[0] != 0 || px[1] != 0 || px[2] != 0 {
                             any_non_black = true;
                         }

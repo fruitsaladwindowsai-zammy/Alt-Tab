@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgMap" cx="50%" cy="50%" r="72%">
+      <stop offset="0%" stop-color="#111a2d"/>
+      <stop offset="60%" stop-color="#090e19"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </radialGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#60cdff"/>
+    </linearGradient>
+    <filter id="dragGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <style>
+    @keyframes dragCard {
+      0%, 100% { transform: translate(0px, 0px); }
+      50% { transform: translate(310px, 140px); }
+    }
+    .anim-drag { animation: dragCard 4.5s infinite ease-in-out; }
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Consolas', 'Fira Code', monospace; }
+  </style>
+
+  <rect width="1200" height="750" fill="url(#bgMap)"/>
+
+  <!-- Header Badge -->
+  <g transform="translate(600, 48)">
+    <rect x="-325" y="-18" width="650" height="36" rx="18" fill="#0d1424" stroke="url(#accentGrad)" stroke-width="1.5"/>
+    <circle cx="-300" cy="0" r="5" fill="#00f5d4"/>
+    <text x="-284" y="4" fill="#f8fafc" font-size="13" font-weight="700">Workspace Map — Virtual Desktops, Drag-and-Drop &amp; + New Desktop</text>
+  </g>
+
+  <!-- Source Window Card Being Dragged -->
+  <g transform="translate(150, 125)">
+    <rect width="380" height="190" rx="14" fill="#131f36" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6"/>
+    <text x="190" y="102" fill="#64748b" font-size="12" class="mono" text-anchor="middle">Source plane in The Deep (threshold &gt;= 6px)</text>
+  </g>
+
+  <!-- Drag Trajectory Curve -->
+  <path d="M 340 220 C 480 220, 520 350, 620 430" fill="none" stroke="#00f5d4" stroke-width="2.5" stroke-dasharray="7 7"/>
+  <polygon points="626,435 612,432 621,420" fill="#00f5d4"/>
+
+  <!-- Floating Dragged Ghost Tile -->
+  <g transform="translate(260, 175)" class="anim-drag" filter="url(#dragGlow)">
+    <rect width="210" height="115" rx="10" fill="#162847" stroke="#00f5d4" stroke-width="2"/>
+    <rect x="0" y="0" width="210" height="26" rx="10" fill="#1e3761"/>
+    <text x="12" y="17" fill="#ffffff" font-size="11" font-weight="700">Terminal — cargo build</text>
+    <text x="105" y="72" fill="#00f5d4" font-size="11" class="mono" text-anchor="middle">Dragging window...</text>
+  </g>
+
+  <!-- COM Architecture Callout -->
+  <g transform="translate(650, 125)">
+    <rect width="460" height="190" rx="14" fill="#0e1729" stroke="#60cdff" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="22" y="34" fill="#60cdff" font-size="13" font-weight="700">CROSS-PROCESS MOVE ENGINE (WINDOWS 11)</text>
+    <text x="22" y="64" fill="#e2e8f0" font-size="12" class="mono">1. CoCreateInstance(CLSID_ImmersiveShell)</text>
+    <text x="22" y="88" fill="#cbd5e1" font-size="12" class="mono">2. IApplicationViewCollection::GetViewForHwnd</text>
+    <text x="22" y="112" fill="#00f5d4" font-size="12" class="mono">3. IVirtualDesktopManagerInternal::MoveView</text>
+    <text x="22" y="136" fill="#94a3b8" font-size="12" class="mono">4. Fallback: standard IVirtualDesktopManager</text>
+    <rect x="22" y="150" width="416" height="26" rx="6" fill="#16243d"/>
+    <text x="230" y="167" fill="#60cdff" font-size="11" class="mono" text-anchor="middle">Moves arbitrary cross-process HWNDs cleanly</text>
+  </g>
+
+  <!-- Bottom Workspace Map Strip -->
+  <g transform="translate(80, 390)">
+    <rect width="1040" height="295" rx="16" fill="#0c1322" stroke="#1e293b" stroke-width="2"/>
+    <text x="24" y="34" fill="#94a3b8" font-size="12" font-weight="700" class="mono">BOTTOM WORKSPACE MAP</text>
+
+    <!-- Desktop 1 -->
+    <g transform="translate(24, 54)">
+      <rect width="240" height="215" rx="12" fill="#131e33" stroke="#60cdff" stroke-width="1.5"/>
+      <text x="14" y="24" fill="#f8fafc" font-size="13" font-weight="700">1  Code</text>
+      <circle cx="176" cy="19" r="4" fill="#00f5d4"/>
+      <text x="186" y="23" fill="#00f5d4" font-size="10" font-weight="700">on screen</text>
+      <rect x="14" y="38" width="212" height="162" rx="8" fill="#0a111f" stroke="#334155"/>
+      <rect x="22" y="48" width="120" height="142" rx="5" fill="#1e3a5f" stroke="#60cdff"/>
+      <rect x="148" y="48" width="70" height="142" rx="5" fill="#1c2a42" stroke="#475569"/>
+    </g>
+
+    <!-- Desktop 2 (Drop Target Highlighted) -->
+    <g transform="translate(284, 54)">
+      <rect width="240" height="215" rx="12" fill="#122738" stroke="#00f5d4" stroke-width="2.5" filter="url(#dragGlow)"/>
+      <text x="14" y="24" fill="#00f5d4" font-size="13" font-weight="700">2  Research</text>
+      <text x="226" y="23" fill="#00f5d4" font-size="10" class="mono" text-anchor="end">DROP TARGET</text>
+      <rect x="14" y="38" width="212" height="162" rx="8" fill="#0a1622" stroke="#00f5d4" stroke-dasharray="5 5"/>
+      <rect x="24" y="50" width="192" height="80" rx="5" fill="#1a314d" stroke="#60cdff"/>
+      <text x="120" y="168" fill="#00f5d4" font-size="11" class="mono" text-anchor="middle">Release to move window here</text>
+    </g>
+
+    <!-- Desktop 3 (Empty Desktop Click-to-Switch) -->
+    <g transform="translate(544, 54)">
+      <rect width="240" height="215" rx="12" fill="#111a2c" stroke="#334155" stroke-width="1.5"/>
+      <text x="14" y="24" fill="#cbd5e1" font-size="13" font-weight="700">3  Empty</text>
+      <rect x="14" y="38" width="212" height="162" rx="8" fill="#0a111f" stroke="#1e293b"/>
+      <text x="120" y="118" fill="#64748b" font-size="12" text-anchor="middle">no windows</text>
+      <text x="120" y="138" fill="#60cdff" font-size="10" class="mono" text-anchor="middle">Click to switch directly</text>
+    </g>
+
+    <!-- + New Desktop Card -->
+    <g transform="translate(804, 54)">
+      <rect width="212" height="215" rx="12" fill="#141830" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6 4"/>
+      <circle cx="106" cy="92" r="24" fill="#1e1b4b" stroke="#a78bfa" stroke-width="2"/>
+      <line x1="96" y1="92" x2="116" y2="92" stroke="#c4b5fd" stroke-width="3"/>
+      <line x1="106" y1="82" x2="106" y2="102" stroke="#c4b5fd" stroke-width="3"/>
+      <text x="106" y="142" fill="#e9d5ff" font-size="14" font-weight="700" text-anchor="middle">+ New desktop</text>
+      <text x="106" y="166" fill="#94a3b8" font-size="10" text-anchor="middle">Click to create on-page</text>
+      <text x="106" y="182" fill="#94a3b8" font-size="10" text-anchor="middle">or drop a window here</text>
+    </g>
+  </g>
+</svg>

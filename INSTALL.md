@@ -90,8 +90,10 @@ cargo build --release
   target\release\winscroller-alt-tab.exe
   ```
 
-*(Optional) Verify all unit tests pass on your machine:*
+*(Optional) Initialize & validate your configuration and verify all unit tests pass:*
 ```powershell
+.\target\release\winscroller-alt-tab.exe --init-config
+.\target\release\winscroller-alt-tab.exe --validate
 cargo test
 ```
 
@@ -145,13 +147,16 @@ Whenever new features or bug fixes are released, update your local installation 
 # Navigate to the repo folder
 cd C:\Projects\Alt-Tab
 
+# Gracefully stop the running instance (unlocks the .exe)
+.\target\release\winscroller-alt-tab.exe --quit
+
 # Pull the latest code
 git pull origin main
 
 # Recompile the release binary
 cargo build --release
 
-# Restart the running switcher seamlessly
+# Restart the switcher seamlessly
 .\target\release\winscroller-alt-tab.exe --replace
 ```
 

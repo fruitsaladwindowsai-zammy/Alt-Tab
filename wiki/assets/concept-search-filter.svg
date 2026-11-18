@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgFilter" cx="50%" cy="45%" r="72%">
+      <stop offset="0%" stop-color="#111a2e"/>
+      <stop offset="65%" stop-color="#090d18"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </radialGradient>
+    <linearGradient id="pillBorder" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <style>
+    @keyframes blinkCaret {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .caret { animation: blinkCaret 1.1s infinite; }
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Consolas', 'Fira Code', monospace; }
+  </style>
+
+  <rect width="1200" height="750" fill="url(#bgFilter)"/>
+
+  <!-- Header Badge -->
+  <g transform="translate(600, 48)">
+    <rect x="-315" y="-18" width="630" height="36" rx="18" fill="#0d1424" stroke="url(#pillBorder)" stroke-width="1.5"/>
+    <circle cx="-288" cy="0" r="5" fill="#00f5d4"/>
+    <text x="-272" y="4" fill="#f8fafc" font-size="13" font-weight="700">Instant Live Search — Multi-Field Case-Insensitive Filtering</text>
+  </g>
+
+  <!-- Search Pill -->
+  <g transform="translate(300, 115)">
+    <rect width="600" height="62" rx="31" fill="#101a2e" stroke="url(#pillBorder)" stroke-width="2.5"/>
+    <text x="34" y="38" fill="#64748b" font-size="18" class="mono">/</text>
+    <text x="62" y="38" fill="#f8fafc" font-size="20" class="mono" font-weight="700">fathom</text>
+    <rect x="142" y="18" width="3" height="26" rx="1" fill="#00f5d4" class="caret"/>
+    <rect x="435" y="15" width="142" height="32" rx="16" fill="#172b47"/>
+    <text x="506" y="36" fill="#00f5d4" font-size="12" class="mono" font-weight="700" text-anchor="middle">2 / 12 matches</text>
+  </g>
+
+  <!-- Four Indexed Fields -->
+  <g transform="translate(90, 225)">
+    <rect x="0" y="0" width="235" height="125" rx="12" fill="#0e182c" stroke="#00f5d4" stroke-width="1.5"/>
+    <text x="18" y="30" fill="#00f5d4" font-size="12" font-weight="700" class="mono">1. WINDOW TITLE</text>
+    <text x="18" y="58" fill="#f8fafc" font-size="13" font-weight="600">"Palette.js — fathom"</text>
+    <text x="18" y="84" fill="#94a3b8" font-size="11">Matches project names,</text>
+    <text x="18" y="102" fill="#94a3b8" font-size="11">tabs, and document titles</text>
+
+    <rect x="260" y="0" width="235" height="125" rx="12" fill="#0e182c" stroke="#60cdff" stroke-width="1.5"/>
+    <text x="278" y="30" fill="#60cdff" font-size="12" font-weight="700" class="mono">2. APP NAME</text>
+    <text x="278" y="58" fill="#f8fafc" font-size="13" font-weight="600">"Code", "Terminal"</text>
+    <text x="278" y="84" fill="#94a3b8" font-size="11">Title-cased human label</text>
+    <text x="278" y="102" fill="#94a3b8" font-size="11">derived from process ID</text>
+
+    <rect x="520" y="0" width="235" height="125" rx="12" fill="#0e182c" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="538" y="30" fill="#c084fc" font-size="12" font-weight="700" class="mono">3. EXECUTABLE / ID</text>
+    <text x="538" y="58" fill="#f8fafc" font-size="13" font-weight="600">"wt.exe", "chrome.exe"</text>
+    <text x="538" y="84" fill="#94a3b8" font-size="11">Raw process executable</text>
+    <text x="538" y="102" fill="#94a3b8" font-size="11">stem &amp; application ID</text>
+
+    <rect x="780" y="0" width="240" height="125" rx="12" fill="#0e182c" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="798" y="30" fill="#38bdf8" font-size="12" font-weight="700" class="mono">4. WORKSPACE LABEL</text>
+    <text x="798" y="58" fill="#f8fafc" font-size="13" font-weight="600">"Desktop 2", "Work"</text>
+    <text x="798" y="84" fill="#94a3b8" font-size="11">Filter directly by custom</text>
+    <text x="798" y="102" fill="#94a3b8" font-size="11">Virtual Desktop names</text>
+  </g>
+
+  <!-- Filtered Output Behavior -->
+  <g transform="translate(90, 395)">
+    <rect width="1020" height="290" rx="16" fill="#0c1322" stroke="#1e293b" stroke-width="2"/>
+    <text x="28" y="38" fill="#00f5d4" font-size="14" font-weight="700">SYNCHRONIZED LIVE UI PROJECTION</text>
+
+    <g transform="translate(28, 62)">
+      <rect width="305" height="196" rx="12" fill="#122136" stroke="#00f5d4" stroke-opacity="0.5"/>
+      <text x="18" y="30" fill="#00f5d4" font-size="13" font-weight="700">The Deep Reflows</text>
+      <text x="18" y="58" fill="#e2e8f0" font-size="12">Only matching windows stay</text>
+      <text x="18" y="78" fill="#e2e8f0" font-size="12">in the active slot order.</text>
+      <text x="18" y="108" fill="#94a3b8" font-size="12">Camera smoothly glides to</text>
+      <text x="18" y="128" fill="#94a3b8" font-size="12">the newest match in 220ms.</text>
+      <text x="18" y="168" fill="#60cdff" font-size="11" class="mono">Enter -&gt; focus immediately</text>
+    </g>
+
+    <g transform="translate(358, 62)">
+      <rect width="305" height="196" rx="12" fill="#121e33" stroke="#60cdff" stroke-opacity="0.5"/>
+      <text x="18" y="30" fill="#60cdff" font-size="13" font-weight="700">Workspace Map Highlights</text>
+      <text x="18" y="58" fill="#e2e8f0" font-size="12">Matching minimap tiles stay</text>
+      <text x="18" y="78" fill="#e2e8f0" font-size="12">accent-lit while non-matches</text>
+      <text x="18" y="98" fill="#e2e8f0" font-size="12">softly dim in context.</text>
+      <text x="18" y="128" fill="#94a3b8" font-size="12">See which desktop owns each</text>
+      <text x="18" y="148" fill="#94a3b8" font-size="12">matching app at a glance.</text>
+    </g>
+
+    <g transform="translate(688, 62)">
+      <rect width="304" height="196" rx="12" fill="#171630" stroke="#8b5cf6" stroke-opacity="0.5"/>
+      <text x="18" y="30" fill="#c084fc" font-size="13" font-weight="700">Smart Keyboard Ergonomics</text>
+      <text x="18" y="58" fill="#e2e8f0" font-size="12" class="mono">1..9 (empty)  -&gt; desktop jump</text>
+      <text x="18" y="82" fill="#e2e8f0" font-size="12" class="mono">1..9 (typing) -&gt; query digit</text>
+      <text x="18" y="106" fill="#e2e8f0" font-size="12" class="mono">Backspace     -&gt; pop char</text>
+      <text x="18" y="130" fill="#e2e8f0" font-size="12" class="mono">Ctrl+Back     -&gt; clear query</text>
+      <text x="18" y="154" fill="#e2e8f0" font-size="12" class="mono">Esc           -&gt; clear / close</text>
+    </g>
+  </g>
+</svg>

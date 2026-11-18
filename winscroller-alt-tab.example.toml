@@ -1,0 +1,52 @@
+# Winscroller Alt+Tab — Example Configuration
+#
+# Copy this file to:
+#   %APPDATA%\winscroller-alt-tab\config.toml
+# (Or run: winscroller-alt-tab.exe --init-config)
+#
+# Changes reload automatically the next time the overlay opens or updates.
+# Both kebab-case (`corner-radius`) and snake_case (`corner_radius`) keys are supported.
+# Both `[winscroller]` and legacy `[fathom]` section headers are supported.
+
+[winscroller]
+
+# Corner radius in logical pixels for window cards, filter pill, and workspace map cards.
+# Valid range: >= 0.0   (Default: 10)
+corner-radius = 10
+
+# Border stroke width in logical pixels for cards and selection outlines.
+# Valid range: >= 0.0   (Default: 1.0)
+border-width = 1.0
+
+# DirectWrite font family name used for window titles, timestamps, and hints.
+# Must be a non-empty installed Windows font name.   (Default: "Segoe UI")
+font-family = "Segoe UI"
+
+# Global typography scaling multiplier applied on top of monitor DPI scaling.
+# Valid range: > 0.0, clamped to [0.7, 2.0]   (Default: 1.0)
+font-scale = 1.0
+
+# Show special/scratchpad workspace groups when present (e.g. in demo or tagged workspaces).
+# Valid values: true | false   (Default: true)
+show-scratchpads = true
+
+# Allow Alt+Tab Hold mode to open even when only 1 window is open.
+# When false, Hold mode requires at least 2 windows (Browse mode always opens).
+# Valid values: true | false   (Default: false)
+open-on-single = false
+
+# ---------------------------------------------------------------------------
+# Optional Color Overrides
+# ---------------------------------------------------------------------------
+# By default, Winscroller Alt+Tab reads Windows' system light/dark mode
+# (`AppsUseLightTheme`) and your Windows accent color (`DWM\AccentColor`),
+# then derives all surfaces, fog, shadows, and borders with WCAG 2 contrast
+# guarantees (5.5:1 soft text, 4.5:1 faint text & cards, 3.0:1 accents).
+#
+# Uncomment any key below to override an individual base color.
+# Supported hex formats: #rgb, #rrggbb, or #aarrggbb.
+#
+# foreground = "#f3f3f5"
+# background = "#1c1c1e"
+# accent     = "#60cdff"
+# urgent     = "#ff6b6b"

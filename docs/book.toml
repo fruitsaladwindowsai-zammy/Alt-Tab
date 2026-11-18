@@ -1,0 +1,15 @@
+[book]
+title = "Winscroller Alt+Tab"
+description = "Hardware-accelerated, depth-based Alt+Tab window switcher and Virtual Desktop organizer for Windows 10/11 written in Rust"
+authors = ["Winscroller Alt+Tab contributors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/fruitsaladwindowsai-zammy/Alt-Tab"
+edit-url-template = "https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/edit/main/docs/{path}"

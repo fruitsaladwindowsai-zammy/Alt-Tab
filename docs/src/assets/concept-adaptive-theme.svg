@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgTheme" cx="50%" cy="50%" r="72%">
+      <stop offset="0%" stop-color="#111a2e"/>
+      <stop offset="65%" stop-color="#090d17"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </radialGradient>
+    <linearGradient id="themeBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60cdff"/>
+      <stop offset="50%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#0067c0"/>
+    </linearGradient>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Consolas', 'Fira Code', monospace; }
+  </style>
+
+  <rect width="1200" height="750" fill="url(#bgTheme)"/>
+
+  <!-- Header Badge -->
+  <g transform="translate(600, 48)">
+    <rect x="-320" y="-18" width="640" height="36" rx="18" fill="#0d1424" stroke="url(#themeBar)" stroke-width="1.5"/>
+    <circle cx="-294" cy="0" r="5" fill="#00f5d4"/>
+    <text x="-278" y="4" fill="#f8fafc" font-size="13" font-weight="700">Adaptive Plain Windows Theme &amp; WCAG 2 Contrast Engine</text>
+  </g>
+
+  <!-- Left: Windows Dark Mode Card -->
+  <g transform="translate(80, 115)">
+    <rect width="490" height="300" rx="16" fill="#1c1c1e" stroke="#60cdff" stroke-width="2"/>
+    <text x="24" y="38" fill="#f3f3f5" font-size="15" font-weight="700">Windows Dark Mode (AppsUseLightTheme = 0)</text>
+    <text x="24" y="62" fill="#a1a1aa" font-size="12" class="mono">bg: #1c1c1e  |  fg: #f3f3f5  |  accent: DWM (#60cdff)</text>
+
+    <g transform="translate(24, 86)">
+      <rect width="210" height="84" rx="10" fill="#2c2c30" stroke="#60cdff" stroke-width="1.5"/>
+      <text x="16" y="30" fill="#f3f3f5" font-size="13" font-weight="700">Selected Card</text>
+      <text x="16" y="52" fill="#b4b4bc" font-size="11">text_soft &gt;= 5.5:1</text>
+      <text x="16" y="70" fill="#60cdff" font-size="11" class="mono">accent_text &gt;= 4.5:1</text>
+
+      <rect x="230" y="0" width="210" height="84" rx="10" fill="#242428" stroke="#3f3f46"/>
+      <text x="246" y="30" fill="#f3f3f5" font-size="13" font-weight="700">Depth Card</text>
+      <text x="246" y="52" fill="#9a9aa3" font-size="11">text_faint &gt;= 4.5:1</text>
+      <text x="246" y="70" fill="#ff6b6b" font-size="11" class="mono">urgent &gt;= 3.0:1</text>
+    </g>
+
+    <rect x="24" y="192" width="442" height="84" rx="10" fill="#141416" stroke="#2d2d32"/>
+    <text x="40" y="218" fill="#60cdff" font-size="12" class="mono">DARK_VEIL alpha stops: [0.75, 0.80, 0.86]</text>
+    <text x="40" y="240" fill="#cbd5e1" font-size="12">Automatic contrast solver iterates 40 steps toward white</text>
+    <text x="40" y="260" fill="#94a3b8" font-size="12">until every text and marker meets its WCAG floor.</text>
+  </g>
+
+  <!-- Right: Windows Light Mode Card -->
+  <g transform="translate(630, 115)">
+    <rect width="490" height="300" rx="16" fill="#f3f3f3" stroke="#0067c0" stroke-width="2"/>
+    <text x="24" y="38" fill="#1b1b1f" font-size="15" font-weight="700">Windows Light Mode (AppsUseLightTheme = 1)</text>
+    <text x="24" y="62" fill="#52525b" font-size="12" class="mono">bg: #f3f3f3  |  fg: #1b1b1f  |  accent: DWM (#0067c0)</text>
+
+    <g transform="translate(24, 86)">
+      <rect width="210" height="84" rx="10" fill="#ffffff" stroke="#0067c0" stroke-width="1.5"/>
+      <text x="16" y="30" fill="#1b1b1f" font-size="13" font-weight="700">Selected Card</text>
+      <text x="16" y="52" fill="#44444c" font-size="11">text_soft &gt;= 5.5:1</text>
+      <text x="16" y="70" fill="#0067c0" font-size="11" class="mono">accent_text &gt;= 4.5:1</text>
+
+      <rect x="230" y="0" width="210" height="84" rx="10" fill="#fafafa" stroke="#d4d4d8"/>
+      <text x="246" y="30" fill="#1b1b1f" font-size="13" font-weight="700">Depth Card</text>
+      <text x="246" y="52" fill="#5a5a63" font-size="11">text_faint &gt;= 4.5:1</text>
+      <text x="246" y="70" fill="#c42b1c" font-size="11" class="mono">urgent &gt;= 3.0:1</text>
+    </g>
+
+    <rect x="24" y="192" width="442" height="84" rx="10" fill="#e9e9ec" stroke="#d4d4d8"/>
+    <text x="40" y="218" fill="#0067c0" font-size="12" class="mono">LIGHT_VEIL alpha stops: [0.82, 0.86, 0.90]</text>
+    <text x="40" y="240" fill="#27272a" font-size="12">Automatic contrast solver iterates 40 steps toward black</text>
+    <text x="40" y="260" fill="#52525b" font-size="12">so bright accents stay razor-sharp on light surfaces.</text>
+  </g>
+
+  <!-- Bottom: Live Reload Config Flow -->
+  <g transform="translate(80, 460)">
+    <rect width="1040" height="230" rx="16" fill="#0c1322" stroke="#1e293b" stroke-width="2"/>
+    <text x="28" y="38" fill="#00f5d4" font-size="14" font-weight="700">WCAG 2 CONTRAST FLOORS &amp; LIVE CONFIG RELOAD</text>
+
+    <g transform="translate(28, 62)">
+      <rect width="225" height="140" rx="10" fill="#121e33" stroke="#00f5d4" stroke-opacity="0.5"/>
+      <text x="16" y="30" fill="#00f5d4" font-size="22" font-weight="700" class="mono">5.5 : 1</text>
+      <text x="16" y="56" fill="#f8fafc" font-size="13" font-weight="700">Soft Body Text</text>
+      <text x="16" y="80" fill="#94a3b8" font-size="11">Subtitles, app metadata,</text>
+      <text x="16" y="98" fill="#94a3b8" font-size="11">timestamps over bg</text>
+      <text x="16" y="124" fill="#60cdff" font-size="10" class="mono">SOFT_CONTRAST</text>
+    </g>
+
+    <g transform="translate(278, 62)">
+      <rect width="225" height="140" rx="10" fill="#121e33" stroke="#60cdff" stroke-opacity="0.5"/>
+      <text x="16" y="30" fill="#60cdff" font-size="22" font-weight="700" class="mono">4.5 : 1</text>
+      <text x="16" y="56" fill="#f8fafc" font-size="13" font-weight="700">AA Text &amp; Cards</text>
+      <text x="16" y="80" fill="#94a3b8" font-size="11">Faint hints, accent text,</text>
+      <text x="16" y="98" fill="#94a3b8" font-size="11">and selected card headers</text>
+      <text x="16" y="124" fill="#60cdff" font-size="10" class="mono">FAINT / CARD_CONTRAST</text>
+    </g>
+
+    <g transform="translate(528, 62)">
+      <rect width="225" height="140" rx="10" fill="#121e33" stroke="#8b5cf6" stroke-opacity="0.5"/>
+      <text x="16" y="30" fill="#c084fc" font-size="22" font-weight="700" class="mono">3.0 : 1</text>
+      <text x="16" y="56" fill="#f8fafc" font-size="13" font-weight="700">UI Markers &amp; Urgent</text>
+      <text x="16" y="80" fill="#94a3b8" font-size="11">Selection rings, accent</text>
+      <text x="16" y="98" fill="#94a3b8" font-size="11">borders, HSHELL_FLASH</text>
+      <text x="16" y="124" fill="#c084fc" font-size="10" class="mono">MARK_CONTRAST</text>
+    </g>
+
+    <g transform="translate(778, 62)">
+      <rect width="234" height="140" rx="10" fill="#122136" stroke="#00f5d4"/>
+      <text x="16" y="28" fill="#00f5d4" font-size="13" font-weight="700">Zero-Restart Reload</text>
+      <text x="16" y="54" fill="#e2e8f0" font-size="11" class="mono">config.toml mtime check</text>
+      <text x="16" y="76" fill="#cbd5e1" font-size="11">Re-queries Windows theme</text>
+      <text x="16" y="94" fill="#cbd5e1" font-size="11">&amp; optional hex overrides</text>
+      <text x="16" y="112" fill="#cbd5e1" font-size="11">every time overlay opens.</text>
+    </g>
+  </g>
+</svg>

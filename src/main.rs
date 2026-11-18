@@ -34,6 +34,7 @@ use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{GetLastError, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::Graphics::Imaging::IWICImagingFactory;
 use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED};
+use windows::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::CreateMutexW;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
@@ -44,12 +45,12 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 use windows::Win32::UI::Shell::IVirtualDesktopManager;
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, FindWindowW, GetMessageW, KillTimer,
-    PostMessageW, PostQuitMessage, RegisterClassW, RegisterShellHookWindow,
-    RegisterWindowMessageW, SetTimer, SetWindowPos, ShowWindow, TranslateMessage, CS_HREDRAW,
-    CS_VREDRAW, HWND_TOPMOST, MSG, SC_KEYMENU, SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, SW_SHOW,
-    WM_ACTIVATE, WM_CHAR, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_KEYDOWN, WM_LBUTTONDOWN,
-    WM_LBUTTONUP, WM_MOUSEMOVE, WM_MOUSEHWHEEL, WM_MOUSEWHEEL, WM_RBUTTONUP, WM_SYSCHAR,
-    WM_SYSCOMMAND, WM_SYSKEYDOWN, WM_TIMER, WNDCLASSW, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
+    PostMessageW, PostQuitMessage, RegisterClassW, RegisterShellHookWindow, RegisterWindowMessageW,
+    SetTimer, SetWindowPos, ShowWindow, TranslateMessage, CS_HREDRAW, CS_VREDRAW, HWND_TOPMOST,
+    MSG, SC_KEYMENU, SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, SW_SHOW, WM_ACTIVATE, WM_CHAR,
+    WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_KEYDOWN, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEHWHEEL,
+    WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_RBUTTONUP, WM_SYSCHAR, WM_SYSCOMMAND, WM_SYSKEYDOWN, WM_TIMER,
+    WNDCLASSW, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
 };
 
 const HSHELL_FLASH: usize = 0x8006;
@@ -98,7 +99,12 @@ impl AppState {
 
         if opened && !revealed {
             unsafe {
-                let _ = SetTimer(self.hwnd, TIMER_REVEAL_ID, controller::REVEAL_DELAY_MS as u32, None);
+                let _ = SetTimer(
+                    self.hwnd,
+                    TIMER_REVEAL_ID,
+                    controller::REVEAL_DELAY_MS as u32,
+                    None,
+                );
             }
             self.ensure_anim_timer();
             return;
@@ -256,7 +262,10 @@ impl AppState {
             .unwrap_or(&self.capture.store)
             .clone();
         if let Ok(store) = store_arc.lock() {
-            if let Ok(hits) = self.renderer.render_to_hwnd(self.hwnd, &self.ctrl, &store, now_ms) {
+            if let Ok(hits) = self
+                .renderer
+                .render_to_hwnd(self.hwnd, &self.ctrl, &store, now_ms)
+            {
                 self.hits = hits;
             }
         }
@@ -269,7 +278,9 @@ impl AppState {
             Action::Cancel => {
                 self.sync_overlay_visibility();
                 if self.demo_quit_on_close {
-                    unsafe { PostQuitMessage(0); }
+                    unsafe {
+                        PostQuitMessage(0);
+                    }
                 }
             }
             Action::Commit {
@@ -280,7 +291,9 @@ impl AppState {
             } => {
                 self.sync_overlay_visibility();
                 if self.demo_quit_on_close {
-                    unsafe { PostQuitMessage(0); }
+                    unsafe {
+                        PostQuitMessage(0);
+                    }
                     return;
                 }
                 if !self.ctrl.demo_mode {
@@ -296,7 +309,9 @@ impl AppState {
             Action::SwitchWorkspace { workspace_key } => {
                 self.sync_overlay_visibility();
                 if self.demo_quit_on_close {
-                    unsafe { PostQuitMessage(0); }
+                    unsafe {
+                        PostQuitMessage(0);
+                    }
                     return;
                 }
                 if !self.ctrl.demo_mode {
@@ -319,11 +334,9 @@ impl AppState {
 
         self.suppress_deactivate_until_ms = now_epoch_ms().saturating_add(900);
         let move_hwnd = move_entry_idx.and_then(|i| self.ctrl.field.get(i).map(|e| e.hwnd));
-        if let Some(info) = win_platform::create_virtual_desktop(
-            self.hwnd,
-            move_hwnd,
-            self.vdm.as_ref(),
-        ) {
+        if let Some(info) =
+            win_platform::create_virtual_desktop(self.hwnd, move_hwnd, self.vdm.as_ref())
+        {
             let key = format!("vd:{}", win_platform::format_guid_braced(info.guid));
             let monitor = self
                 .ctrl
@@ -364,7 +377,9 @@ impl AppState {
             win_platform::move_window_to_desktop_key(entry.hwnd, &target_key, self.vdm.as_ref())
         };
         if moved_ok {
-            let _ = self.ctrl.move_entry_to_workspace_group(entry_idx, group_idx);
+            let _ = self
+                .ctrl
+                .move_entry_to_workspace_group(entry_idx, group_idx);
             self.dirty = true;
         }
     }
@@ -485,7 +500,11 @@ impl AppState {
 fn vk_to_char(vk: u16, shift: bool) -> Option<char> {
     if (0x41..=0x5A).contains(&vk) {
         let base = (vk as u8) as char;
-        return Some(if shift { base } else { base.to_ascii_lowercase() });
+        return Some(if shift {
+            base
+        } else {
+            base.to_ascii_lowercase()
+        });
     }
     if (0x30..=0x39).contains(&vk) && !shift {
         return Some((vk as u8) as char);
@@ -535,7 +554,7 @@ unsafe extern "system" fn wnd_proc(
     let state = &mut *ptr;
 
     if msg == state.shell_hook_msg && state.shell_hook_msg != 0 {
-        if wparam.0 == HSHELL_FLASH as usize {
+        if wparam.0 == HSHELL_FLASH {
             state.urgent_hwnds.insert(lparam.0);
         }
         return LRESULT(0);
@@ -739,7 +758,9 @@ unsafe extern "system" fn wnd_proc(
             }
             for &(g_idx, r) in &state.hits.workspace_cards {
                 if point_in(r, x, y) {
-                    if let Some(front) = field::group_front(&state.ctrl.groups[g_idx], &state.ctrl.order) {
+                    if let Some(front) =
+                        field::group_front(&state.ctrl.groups[g_idx], &state.ctrl.order)
+                    {
                         state.ctrl.selected_index = Some(front);
                         let act = state.ctrl.commit();
                         state.handle_action(act);
@@ -959,8 +980,135 @@ fn main() {
     }
 
     let args: Vec<String> = std::env::args().skip(1).collect();
+
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+        println!(
+            "Winscroller Alt+Tab v{}\n\n\
+             USAGE:\n  winscroller-alt-tab.exe [OPTIONS]\n\n\
+             OPTIONS:\n  \
+               --browse                Open immediately in Browse mode (or wake running instance)\n  \
+               --no-elevate            Run without requesting Administrator UAC elevation\n  \
+               --replace               Terminate any existing instance and start fresh\n  \
+               --quit                  Gracefully exit any currently running instance\n  \
+               --init-config           Create default config.toml at %APPDATA%\\winscroller-alt-tab\\\n  \
+               --validate              Validate config.toml syntax and values\n  \
+               --demo                  Launch interactive 12-window / 8-workspace demo\n  \
+               --render-demo <path>    Render offscreen 1920x1080 demo PNG and exit\n  \
+               --render-gallery <dir>  Render feature screenshots and animation frames\n  \
+               -V, --version           Print version information\n  \
+               -h, --help              Print this help message",
+            env!("CARGO_PKG_VERSION")
+        );
+        unsafe {
+            CoUninitialize();
+        }
+        return;
+    }
+
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+        println!("winscroller-alt-tab {}", env!("CARGO_PKG_VERSION"));
+        unsafe {
+            CoUninitialize();
+        }
+        return;
+    }
+
+    if args.iter().any(|a| a == "--init-config") {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+        match Config::ensure_default_file() {
+            Some(path) => println!("Config ready at: {}", path.display()),
+            None => {
+                eprintln!("Error: %APPDATA% environment variable is not set.");
+                unsafe {
+                    CoUninitialize();
+                }
+                std::process::exit(1);
+            }
+        }
+        unsafe {
+            CoUninitialize();
+        }
+        return;
+    }
+
+    if args.iter().any(|a| a == "--validate") {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+        match Config::config_path() {
+            Some(path) if path.exists() => match std::fs::read_to_string(&path) {
+                Ok(contents) => match Config::validate_toml(&contents) {
+                    Ok(_) => println!("Configuration valid: {}", path.display()),
+                    Err(errors) => {
+                        eprintln!("Configuration errors in {}:", path.display());
+                        for err in errors {
+                            eprintln!("  - {err}");
+                        }
+                        unsafe {
+                            CoUninitialize();
+                        }
+                        std::process::exit(1);
+                    }
+                },
+                Err(err) => {
+                    eprintln!("Failed to read {}: {err}", path.display());
+                    unsafe {
+                        CoUninitialize();
+                    }
+                    std::process::exit(1);
+                }
+            },
+            Some(path) => {
+                println!(
+                    "No config file at {} (defaults are valid; run --init-config to create one).",
+                    path.display()
+                );
+            }
+            None => {
+                eprintln!("Error: %APPDATA% environment variable is not set.");
+                unsafe {
+                    CoUninitialize();
+                }
+                std::process::exit(1);
+            }
+        }
+        unsafe {
+            CoUninitialize();
+        }
+        return;
+    }
+
+    if args.iter().any(|a| a == "--quit") {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+            if let Ok(existing) = FindWindowW(WINDOW_CLASS, None) {
+                if !existing.0.is_null() {
+                    let _ = PostMessageW(existing, WM_FATHOM_QUIT, WPARAM(0), LPARAM(0));
+                    println!("Sent quit signal to running Winscroller Alt+Tab instance.");
+                } else {
+                    println!("No running Winscroller Alt+Tab instance found.");
+                }
+            } else {
+                println!("No running Winscroller Alt+Tab instance found.");
+            }
+            CoUninitialize();
+        }
+        return;
+    }
+
     if let Some(pos) = args.iter().position(|a| a == "--render-demo") {
-        let out_path = args.get(pos + 1).map(|s| s.as_str()).unwrap_or("winscroller_demo.png");
+        let out_path = args
+            .get(pos + 1)
+            .map(|s| s.as_str())
+            .unwrap_or("winscroller_demo.png");
         let (cfg, _) = Config::load_or_default();
         let pal = cfg.resolve_palette(win_platform::read_windows_auto_theme());
         let mut ctrl = Controller::new(cfg.clone(), pal);
@@ -974,7 +1122,9 @@ fn main() {
                 .render_to_png(&wic, out_path, &ctrl, &store, 1920, 1080, now_ms)
                 .expect("render demo png");
         }
-        unsafe { CoUninitialize(); }
+        unsafe {
+            CoUninitialize();
+        }
         return;
     }
 
@@ -988,7 +1138,9 @@ fn main() {
             demo::render_gallery(out_dir, &wic, &mut renderer, &cfg, now_ms)
                 .expect("render demo gallery");
         }
-        unsafe { CoUninitialize(); }
+        unsafe {
+            CoUninitialize();
+        }
         return;
     }
 
@@ -1003,7 +1155,9 @@ fn main() {
             forward.push("--replace".to_string());
         }
         if win_platform::relaunch_elevated(&forward) {
-            unsafe { CoUninitialize(); }
+            unsafe {
+                CoUninitialize();
+            }
             return;
         }
     }
@@ -1016,7 +1170,10 @@ fn main() {
                         let _ = PostMessageW(existing, WM_FATHOM_QUIT, WPARAM(0), LPARAM(0));
                         for _ in 0..20 {
                             std::thread::sleep(std::time::Duration::from_millis(25));
-                            if FindWindowW(WINDOW_CLASS, None).map(|h| h.0.is_null()).unwrap_or(true) {
+                            if FindWindowW(WINDOW_CLASS, None)
+                                .map(|h| h.0.is_null())
+                                .unwrap_or(true)
+                            {
                                 break;
                             }
                         }
@@ -1103,7 +1260,13 @@ fn main() {
             let (_, target_rect) = win_platform::enumerate_monitors();
             let mut store = MediaStore::default();
             let now_ms = now_epoch_ms();
-            demo::setup_demo(&mut state.ctrl, &mut store, target_rect.width, target_rect.height, now_ms);
+            demo::setup_demo(
+                &mut state.ctrl,
+                &mut store,
+                target_rect.width,
+                target_rect.height,
+                now_ms,
+            );
             state.ctrl.target_monitor = target_rect;
             state.demo_store = Some(Arc::new(Mutex::new(store)));
             state.sync_overlay_visibility();

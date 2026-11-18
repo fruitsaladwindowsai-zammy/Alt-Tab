@@ -9,15 +9,28 @@ pub struct Rgba {
 }
 
 impl Rgba {
-    pub const WHITE: Self = Self { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
-    pub const BLACK: Self = Self { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+    pub const WHITE: Self = Self {
+        r: 1.0,
+        g: 1.0,
+        b: 1.0,
+        a: 1.0,
+    };
+    pub const BLACK: Self = Self {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 1.0,
+    };
 
     pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
 
     pub fn with_alpha(self, alpha: f32) -> Self {
-        Self { a: alpha.clamp(0.0, 1.0), ..self }
+        Self {
+            a: alpha.clamp(0.0, 1.0),
+            ..self
+        }
     }
 
     pub fn parse(value: &str) -> Option<Self> {
@@ -83,7 +96,12 @@ impl Rgba {
         let qr = (self.r.clamp(0.0, 1.0) * 255.0).round() / 255.0;
         let qg = (self.g.clamp(0.0, 1.0) * 255.0).round() / 255.0;
         let qb = (self.b.clamp(0.0, 1.0) * 255.0).round() / 255.0;
-        Self { r: qr, g: qg, b: qb, a: 1.0 }
+        Self {
+            r: qr,
+            g: qg,
+            b: qb,
+            a: 1.0,
+        }
     }
 }
 
@@ -228,7 +246,10 @@ fn tier(fg: Rgba, bg: Rgba, share: f32, floors: &[(Rgba, f64)]) -> Rgba {
     let mut s = share;
     while s > 0.001 {
         let color = mix(fg, bg, s).rounded_rgb();
-        if floors.iter().all(|(surface, ratio)| contrast(color, *surface) >= *ratio) {
+        if floors
+            .iter()
+            .all(|(surface, ratio)| contrast(color, *surface) >= *ratio)
+        {
             return color;
         }
         s -= 0.02;
@@ -247,44 +268,97 @@ pub fn derive(source: ThemeSource) -> DerivedPalette {
     let veil = if light { LIGHT_VEIL } else { DARK_VEIL };
     let accent = readable(accent_in, bg, MARK_CONTRAST, away);
     let paper = |share: f32| mix(bg, Rgba::WHITE, share);
-    let card_selected_top = if light { paper(0.90) } else { mix(bg, fg, 0.12) };
+    let card_selected_top = if light {
+        paper(0.90)
+    } else {
+        mix(bg, fg, 0.12)
+    };
 
     DerivedPalette {
         light,
         veil_top: bg.with_alpha(veil[0]),
         veil_middle: bg.with_alpha(veil[1]),
         veil_bottom: bg.with_alpha(veil[2]),
-        surface_light: if light { Rgba::WHITE.with_alpha(0.55) } else { fg.with_alpha(0.06) },
-        surface_light_end: if light { Rgba::WHITE.with_alpha(0.0) } else { fg.with_alpha(0.0) },
+        surface_light: if light {
+            Rgba::WHITE.with_alpha(0.55)
+        } else {
+            fg.with_alpha(0.06)
+        },
+        surface_light_end: if light {
+            Rgba::WHITE.with_alpha(0.0)
+        } else {
+            fg.with_alpha(0.0)
+        },
         depth_shade: if light { mix(bg, fg, 0.45) } else { bg },
         text: fg,
-        text_soft: tier(fg, bg, SOFT_SHARE, &[(bg, SOFT_CONTRAST), (card_selected_top, CARD_CONTRAST)]),
+        text_soft: tier(
+            fg,
+            bg,
+            SOFT_SHARE,
+            &[(bg, SOFT_CONTRAST), (card_selected_top, CARD_CONTRAST)],
+        ),
         text_faint: tier(fg, bg, FAINT_SHARE, &[(bg, FAINT_CONTRAST)]),
         accent,
         accent_text: readable(accent_in, bg, FAINT_CONTRAST, away),
         urgent: readable(urgent_in, bg, MARK_CONTRAST, away),
         background: bg,
-        card_top: if light { paper(0.72) } else { mix(bg, fg, 0.085) },
-        card_bottom: if light { paper(0.50) } else { mix(bg, fg, 0.035) },
+        card_top: if light {
+            paper(0.72)
+        } else {
+            mix(bg, fg, 0.085)
+        },
+        card_bottom: if light {
+            paper(0.50)
+        } else {
+            mix(bg, fg, 0.035)
+        },
         card_selected_top,
-        card_selected_bottom: if light { paper(0.70) } else { mix(bg, fg, 0.06) },
+        card_selected_bottom: if light {
+            paper(0.70)
+        } else {
+            mix(bg, fg, 0.06)
+        },
         card_border: fg.with_alpha(if light { 0.16 } else { 0.11 }),
         card_border_hover: fg.with_alpha(if light { 0.34 } else { 0.30 }),
-        shadow: if light { mix(fg, Rgba::BLACK, 0.5).with_alpha(0.20) } else { Rgba::BLACK.with_alpha(0.55) },
+        shadow: if light {
+            mix(fg, Rgba::BLACK, 0.5).with_alpha(0.20)
+        } else {
+            Rgba::BLACK.with_alpha(0.55)
+        },
         glow: accent_in.with_alpha(if light { 0.34 } else { 0.38 }),
         bed: mix(bg, fg, if light { 0.06 } else { 0.04 }),
         frame_edge: fg.with_alpha(if light { 0.12 } else { 0.06 }),
         fog: bg,
         fog_strength: if light { 0.70 } else { 1.0 },
-        panel: if light { paper(0.70).with_alpha(0.94) } else { bg.with_alpha(0.85) },
+        panel: if light {
+            paper(0.70).with_alpha(0.94)
+        } else {
+            bg.with_alpha(0.85)
+        },
         panel_border: fg.with_alpha(if light { 0.18 } else { 0.14 }),
-        key: if light { paper(0.80) } else { fg.with_alpha(0.08) },
+        key: if light {
+            paper(0.80)
+        } else {
+            fg.with_alpha(0.08)
+        },
         key_border: fg.with_alpha(if light { 0.24 } else { 0.20 }),
-        map_card: if light { paper(0.60).with_alpha(0.80) } else { fg.with_alpha(0.045) },
+        map_card: if light {
+            paper(0.60).with_alpha(0.80)
+        } else {
+            fg.with_alpha(0.045)
+        },
         map_card_border: fg.with_alpha(if light { 0.13 } else { 0.10 }),
-        map_card_selected: if light { mix(paper(0.60), accent_in, 0.08).with_alpha(0.90) } else { accent_in.with_alpha(0.08) },
+        map_card_selected: if light {
+            mix(paper(0.60), accent_in, 0.08).with_alpha(0.90)
+        } else {
+            accent_in.with_alpha(0.08)
+        },
         map_card_selected_border: accent.with_alpha(0.70),
-        screen: if light { fg.with_alpha(0.05) } else { Rgba::BLACK.with_alpha(0.22) },
+        screen: if light {
+            fg.with_alpha(0.05)
+        } else {
+            Rgba::BLACK.with_alpha(0.22)
+        },
         screen_border: fg.with_alpha(if light { 0.16 } else { 0.12 }),
         screen_border_on: fg.with_alpha(if light { 0.32 } else { 0.28 }),
         tile: if light {
@@ -292,8 +366,16 @@ pub fn derive(source: ThemeSource) -> DerivedPalette {
         } else {
             mix(Rgba::new(0.12, 0.12, 0.12, 1.0), fg, 0.08).with_alpha(0.90)
         },
-        tile_hover: if light { mix(bg, fg, 0.12) } else { fg.with_alpha(0.20) },
-        tile_selected: if light { mix(paper(0.80), accent_in, 0.24) } else { accent_in.with_alpha(0.36) },
+        tile_hover: if light {
+            mix(bg, fg, 0.12)
+        } else {
+            fg.with_alpha(0.20)
+        },
+        tile_selected: if light {
+            mix(paper(0.80), accent_in, 0.24)
+        } else {
+            accent_in.with_alpha(0.36)
+        },
         tile_border: fg.with_alpha(if light { 0.30 } else { 0.24 }),
         tile_border_active: fg.with_alpha(if light { 0.70 } else { 0.75 }),
         line: fg.with_alpha(if light { 0.26 } else { 0.18 }),

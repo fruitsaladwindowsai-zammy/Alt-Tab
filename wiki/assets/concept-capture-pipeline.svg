@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgCap" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#111a2d"/>
+      <stop offset="65%" stop-color="#080d17"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </radialGradient>
+    <linearGradient id="gpuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#60cdff"/>
+    </linearGradient>
+  </defs>
+  <style>
+    @keyframes streamPulse {
+      0% { stroke-dashoffset: 48; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .anim-stream { stroke-dasharray: 8 4; animation: streamPulse 1.3s linear infinite; }
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Consolas', 'Fira Code', monospace; }
+  </style>
+
+  <rect width="1200" height="750" fill="url(#bgCap)"/>
+
+  <!-- Header Badge -->
+  <g transform="translate(600, 48)">
+    <rect x="-335" y="-18" width="670" height="36" rx="18" fill="#0d1424" stroke="url(#gpuGrad)" stroke-width="1.5"/>
+    <circle cx="-308" cy="0" r="5" fill="#00f5d4"/>
+    <text x="-292" y="4" fill="#f8fafc" font-size="13" font-weight="700">Hardware-Accelerated Capture &amp; Direct3D 11 / Direct2D Pipeline</text>
+  </g>
+
+  <!-- Stage 1: Background Capture Worker -->
+  <g transform="translate(75, 130)">
+    <rect width="315" height="310" rx="14" fill="#0d1628" stroke="#00f5d4" stroke-width="2"/>
+    <rect x="0" y="0" width="315" height="38" rx="14" fill="#132a3c"/>
+    <text x="18" y="24" fill="#00f5d4" font-size="12" font-weight="700" class="mono">1. ASYNC CAPTURE WORKER</text>
+    <text x="18" y="70" fill="#f8fafc" font-size="14" font-weight="700">win_capture.rs</text>
+    <text x="18" y="98" fill="#cbd5e1" font-size="12">• PrintWindow(PW_RENDERFULLCONTENT)</text>
+    <text x="18" y="122" fill="#cbd5e1" font-size="12">• Captures only windows near camera</text>
+    <text x="28" y="140" fill="#94a3b8" font-size="11">(-1.2 &lt;= slot_delta &lt;= VISIBLE_STEPS)</text>
+    <text x="18" y="168" fill="#cbd5e1" font-size="12">• Alpha-normalized BGRA premultiplied</text>
+    <text x="18" y="192" fill="#cbd5e1" font-size="12">• Async desktop wallpaper loader + blur</text>
+    <text x="18" y="216" fill="#cbd5e1" font-size="12">• WIC shell/EXE icon extraction</text>
+    <rect x="18" y="242" width="279" height="48" rx="8" fill="#122136"/>
+    <text x="30" y="263" fill="#00f5d4" font-size="11" class="mono">WM_FATHOM_CAPTURE_READY</text>
+    <text x="30" y="280" fill="#94a3b8" font-size="11" class="mono">Zero main-thread UI stalls</text>
+  </g>
+
+  <!-- Connector 1 -> 2 -->
+  <line x1="390" y1="285" x2="440" y2="285" stroke="#00f5d4" stroke-width="3" class="anim-stream"/>
+  <polygon points="447,285 435,278 435,292" fill="#00f5d4"/>
+
+  <!-- Stage 2: 24-Slot LRU Media Store -->
+  <g transform="translate(450, 130)">
+    <rect width="300" height="310" rx="14" fill="#0d1628" stroke="#60cdff" stroke-width="2"/>
+    <rect x="0" y="0" width="300" height="38" rx="14" fill="#152845"/>
+    <text x="18" y="24" fill="#60cdff" font-size="12" font-weight="700" class="mono">2. 24-SLOT LRU CACHE</text>
+    <text x="18" y="70" fill="#f8fafc" font-size="14" font-weight="700">MediaStore</text>
+    <text x="18" y="98" fill="#cbd5e1" font-size="12">• Retains snapshots for minimized &amp;</text>
+    <text x="28" y="116" fill="#cbd5e1" font-size="12">background-desktop windows</text>
+    <text x="18" y="142" fill="#cbd5e1" font-size="12">• Tracks capture age ("last seen X ago")</text>
+    <text x="18" y="168" fill="#cbd5e1" font-size="12">• Auto-sweeps closed HWNDs immediately</text>
+    <text x="18" y="194" fill="#cbd5e1" font-size="12">• Bounded memory footprint (&lt;24 frames)</text>
+
+    <!-- Visual LRU Slots -->
+    <g transform="translate(18, 224)">
+      <rect x="0" y="0" width="58" height="26" rx="5" fill="#00f5d4" fill-opacity="0.22" stroke="#00f5d4"/>
+      <rect x="66" y="0" width="58" height="26" rx="5" fill="#60cdff" fill-opacity="0.22" stroke="#60cdff"/>
+      <rect x="132" y="0" width="58" height="26" rx="5" fill="#60cdff" fill-opacity="0.16" stroke="#475569"/>
+      <rect x="198" y="0" width="66" height="26" rx="5" fill="#1e293b" stroke="#334155"/>
+      <text x="132" y="48" fill="#60cdff" font-size="11" class="mono" text-anchor="middle">LRU Eviction Cap = 24 Snapshots</text>
+    </g>
+  </g>
+
+  <!-- Connector 2 -> 3 -->
+  <line x1="750" y1="285" x2="800" y2="285" stroke="#8b5cf6" stroke-width="3" class="anim-stream"/>
+  <polygon points="807,285 795,278 795,292" fill="#8b5cf6"/>
+
+  <!-- Stage 3: D3D11 + Direct2D Compositor -->
+  <g transform="translate(810, 130)">
+    <rect width="315" height="310" rx="14" fill="#12142b" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="0" y="0" width="315" height="38" rx="14" fill="#231c4a"/>
+    <text x="18" y="24" fill="#c084fc" font-size="12" font-weight="700" class="mono">3. GPU COMPOSITOR</text>
+    <text x="18" y="70" fill="#f8fafc" font-size="14" font-weight="700">renderer.rs</text>
+    <text x="18" y="98" fill="#cbd5e1" font-size="12">• Direct3D 11 DXGI Flip SwapChain</text>
+    <text x="18" y="122" fill="#cbd5e1" font-size="12">• Direct2D 1.1 rounded cards &amp; fog</text>
+    <text x="18" y="146" fill="#cbd5e1" font-size="12">• DirectWrite ClearType text layout</text>
+    <text x="18" y="170" fill="#cbd5e1" font-size="12">• Per-frame HitRegions (exact clicks)</text>
+    <text x="18" y="194" fill="#cbd5e1" font-size="12">• Offscreen WIC PNG render pipeline</text>
+    <rect x="18" y="232" width="279" height="58" rx="8" fill="#1d183b"/>
+    <text x="30" y="254" fill="#c084fc" font-size="11" class="mono">--render-demo &amp; --render-gallery</text>
+    <text x="30" y="274" fill="#94a3b8" font-size="11" class="mono">Headless 1920x1080 GPU staging readback</text>
+  </g>
+
+  <!-- Bottom Layer Stack Diagram -->
+  <g transform="translate(75, 485)">
+    <rect width="1050" height="205" rx="16" fill="#0c1322" stroke="#1e293b" stroke-width="2"/>
+    <text x="26" y="34" fill="#00f5d4" font-size="13" font-weight="700" class="mono">BACK-TO-FRONT RENDERING LAYERS (SINGLE D2D PASS)</text>
+    <g transform="translate(26, 56)" font-size="12" font-weight="600" text-anchor="middle">
+      <rect x="0" y="0" width="152" height="118" rx="10" fill="#121e33" stroke="#334155"/>
+      <text x="76" y="42" fill="#94a3b8">Layer 1</text>
+      <text x="76" y="66" fill="#f8fafc">Blurred Wallpaper</text>
+      <text x="76" y="88" fill="#64748b" font-size="10" class="mono">+ Veil Gradient</text>
+
+      <rect x="170" y="0" width="152" height="118" rx="10" fill="#122138" stroke="#475569"/>
+      <text x="246" y="42" fill="#60cdff">Layer 2</text>
+      <text x="246" y="66" fill="#f8fafc">The Deep Planes</text>
+      <text x="246" y="88" fill="#94a3b8" font-size="10" class="mono">Back -&gt; Front + Fog</text>
+
+      <rect x="340" y="0" width="152" height="118" rx="10" fill="#12253a" stroke="#00f5d4"/>
+      <text x="416" y="42" fill="#00f5d4">Layer 3</text>
+      <text x="416" y="66" fill="#f8fafc">Sounding Line</text>
+      <text x="416" y="88" fill="#94a3b8" font-size="10" class="mono">Ticks + Lead Diamond</text>
+
+      <rect x="510" y="0" width="152" height="118" rx="10" fill="#14233c" stroke="#60cdff"/>
+      <text x="586" y="42" fill="#60cdff">Layer 4</text>
+      <text x="586" y="66" fill="#f8fafc">Caption &amp; Hints</text>
+      <text x="586" y="88" fill="#94a3b8" font-size="10" class="mono">Title · Age · Fathoms</text>
+
+      <rect x="680" y="0" width="152" height="118" rx="10" fill="#171f3b" stroke="#8b5cf6"/>
+      <text x="756" y="42" fill="#c084fc">Layer 5</text>
+      <text x="756" y="66" fill="#f8fafc">Workspace Map</text>
+      <text x="756" y="88" fill="#94a3b8" font-size="10" class="mono">Minimap + New Card</text>
+
+      <rect x="850" y="0" width="148" height="118" rx="10" fill="#1d1a3b" stroke="#00f5d4"/>
+      <text x="924" y="42" fill="#00f5d4">Layer 6</text>
+      <text x="924" y="66" fill="#f8fafc">Filter &amp; Drag</text>
+      <text x="924" y="88" fill="#94a3b8" font-size="10" class="mono">Query Pill + Ghost</text>
+    </g>
+  </g>
+</svg>

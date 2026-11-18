@@ -82,7 +82,8 @@ impl RecencyState {
                 continue;
             }
             let age_ms = (cand.z_rank as u64) * SEED_STEP_SECONDS * 1000;
-            self.last_active.insert(cand.hwnd, now_ms.saturating_sub(age_ms));
+            self.last_active
+                .insert(cand.hwnd, now_ms.saturating_sub(age_ms));
             if cand.z_rank == 0 && self.active.is_none() {
                 self.active = Some(cand.hwnd);
             } else {
@@ -151,10 +152,17 @@ impl RecencyState {
 
         entries.sort_by(|a, b| {
             if a.active != b.active {
-                return if a.active { std::cmp::Ordering::Less } else { std::cmp::Ordering::Greater };
+                return if a.active {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                };
             }
             if a.seconds != b.seconds {
-                return a.seconds.partial_cmp(&b.seconds).unwrap_or(std::cmp::Ordering::Equal);
+                return a
+                    .seconds
+                    .partial_cmp(&b.seconds)
+                    .unwrap_or(std::cmp::Ordering::Equal);
             }
             if a.z_rank != b.z_rank {
                 return a.z_rank.cmp(&b.z_rank);

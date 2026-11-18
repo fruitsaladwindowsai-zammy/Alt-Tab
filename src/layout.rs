@@ -81,7 +81,11 @@ pub fn overlay_metrics(width: f64, height: f64, font_scale: f64) -> OverlayMetri
     let map_height = (height * 0.2).min(210.0 * unit).max(96.0);
     let caption_height = 62.0 * unit;
     let deep_top = margin + 44.0 * unit;
-    let gauge_width = if width >= 1000.0 { 112.0 * text_unit } else { 0.0 };
+    let gauge_width = if width >= 1000.0 {
+        112.0 * text_unit
+    } else {
+        0.0
+    };
     let aspect = width / height.max(1.0);
     let stage = deep_stage(
         width,
@@ -114,7 +118,11 @@ pub fn step_sum(r: f64) -> f64 {
 }
 
 pub fn fit(box_width: f64, box_height: f64, aspect: f64) -> Rect {
-    let a = if aspect > 0.0 && aspect.is_finite() { aspect } else { 1.6 };
+    let a = if aspect > 0.0 && aspect.is_finite() {
+        aspect
+    } else {
+        1.6
+    };
     let mut width = box_width;
     let mut height = width / a;
     if height > box_height {
@@ -138,7 +146,11 @@ pub fn deep_stage(
     left: f64,
 ) -> DeepStage {
     let inset = left.max(0.0);
-    let a = if aspect.is_finite() { aspect.clamp(1.2, 2.4) } else { 1.6 };
+    let a = if aspect.is_finite() {
+        aspect.clamp(1.2, 2.4)
+    } else {
+        1.6
+    };
     let available = (height - top - bottom).max(1.0);
     let reach = step_sum(VISIBLE_STEPS);
     let mut front_height = available / (1.0 + RISE * reach);
@@ -153,7 +165,9 @@ pub fn deep_stage(
         front_height = front_width / a;
     }
     let margin = width * 0.03;
-    let spread = (room - margin * 2.0 - front_width).min(front_width * 0.85).max(0.0);
+    let spread = (room - margin * 2.0 - front_width)
+        .min(front_width * 0.85)
+        .max(0.0);
     let stack_height = front_height * (1.0 + RISE * reach);
     let stack_top = top + (available - stack_height) / 2.0;
 
@@ -213,7 +227,11 @@ pub fn sounding_marks(
     max_columns: usize,
 ) -> Vec<SoundingMark> {
     let gap = if spacing > 0.0 { spacing } else { 6.0 };
-    let limit = if max_columns > 0 { max_columns } else { usize::MAX };
+    let limit = if max_columns > 0 {
+        max_columns
+    } else {
+        usize::MAX
+    };
 
     struct Row {
         y: f64,
@@ -230,7 +248,11 @@ pub fn sounding_marks(
         let row = match row_idx {
             Some(idx) => &mut rows[idx],
             None => {
-                rows.push(Row { y, count: 0, last_visible_idx: None });
+                rows.push(Row {
+                    y,
+                    count: 0,
+                    last_visible_idx: None,
+                });
                 rows.last_mut().unwrap()
             }
         };
@@ -296,10 +318,7 @@ pub fn outside(rect: Option<Rect>, area: Option<Rect>) -> bool {
     let (Some(r), Some(a)) = (rect, area) else {
         return false;
     };
-    r.x >= a.x + a.width
-        || r.x + r.width <= a.x
-        || r.y >= a.y + a.height
-        || r.y + r.height <= a.y
+    r.x >= a.x + a.width || r.x + r.width <= a.x || r.y >= a.y + a.height || r.y + r.height <= a.y
 }
 
 pub fn map_rect(rect: Rect, bounds: Rect, box_width: f64, box_height: f64) -> Rect {
@@ -317,7 +336,7 @@ pub fn map_rect(rect: Rect, bounds: Rect, box_width: f64, box_height: f64) -> Re
 pub fn grid_rect(position: usize, count: usize, box_width: f64, box_height: f64, gap: f64) -> Rect {
     let n = count.max(1);
     let columns = ((n as f64 * box_width / box_height.max(1.0)).sqrt().ceil() as usize).clamp(1, n);
-    let rows = (n + columns - 1) / columns;
+    let rows = n.div_ceil(columns);
     let g = if gap > 0.0 { gap } else { 2.0 };
     let width = (box_width - g * (columns as f64 + 1.0)) / columns as f64;
     let height = (box_height - g * (rows as f64 + 1.0)) / rows as f64;
@@ -395,7 +414,11 @@ pub fn minimap_items(
             let rects = (0..windows.len())
                 .map(|g| grid_rect(g, windows.len(), box_width, box_height, 3.0))
                 .collect();
-            return MinimapLayout { rects, viewport: None, bounds: None };
+            return MinimapLayout {
+                rects,
+                viewport: None,
+                bounds: None,
+            };
         }
     };
 
@@ -419,7 +442,13 @@ pub fn minimap_items(
         if let Some(r) = k {
             rects.push(map_rect(*r, bounds, box_width, box_height));
         } else {
-            let slot = grid_rect(missing_idx, missing_count.max(1), mapped_vp.width, mapped_vp.height, 3.0);
+            let slot = grid_rect(
+                missing_idx,
+                missing_count.max(1),
+                mapped_vp.width,
+                mapped_vp.height,
+                3.0,
+            );
             rects.push(Rect {
                 x: mapped_vp.x + slot.x,
                 y: mapped_vp.y + slot.y,
@@ -448,7 +477,11 @@ pub fn map_cards(
     let mut widths = Vec::with_capacity(aspects.len());
     let mut total = 0.0;
     for &raw_a in aspects {
-        let aspect = if raw_a.is_finite() { raw_a.clamp(0.8, 5.0) } else { 1.6 };
+        let aspect = if raw_a.is_finite() {
+            raw_a.clamp(0.8, 5.0)
+        } else {
+            1.6
+        };
         let w = height * aspect + chrome;
         widths.push(w);
         total += w;
@@ -511,9 +544,24 @@ mod tests {
 
     #[test]
     fn minimap_keeps_viewport_and_splits_maximized_windows() {
-        let vp = Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1080.0 };
-        let w1 = Some(Rect { x: 0.0, y: 0.0, width: 1920.0, height: 1040.0 });
-        let w2 = Some(Rect { x: -7.0, y: 0.0, width: 1934.0, height: 1047.0 });
+        let vp = Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1080.0,
+        };
+        let w1 = Some(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1040.0,
+        });
+        let w2 = Some(Rect {
+            x: -7.0,
+            y: 0.0,
+            width: 1934.0,
+            height: 1047.0,
+        });
         let layout = minimap_items(Some(vp), &[w1, w2, None], 200.0, 120.0);
         assert!(layout.viewport.is_some());
         assert_eq!(layout.rects.len(), 3);

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgSound" cx="45%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#111a2e"/>
+      <stop offset="65%" stop-color="#090e1a"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </radialGradient>
+    <linearGradient id="railGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="50%" stop-color="#60cdff"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <filter id="glowSound" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <style>
+    @keyframes diamondScrub {
+      0%, 100% { transform: translateY(0px); }
+      35% { transform: translateY(125px); }
+      70% { transform: translateY(240px); }
+    }
+    .anim-diamond { animation: diamondScrub 5.5s infinite ease-in-out; }
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Consolas', 'Fira Code', monospace; }
+  </style>
+
+  <rect width="1200" height="750" fill="url(#bgSound)"/>
+
+  <!-- Top Badge -->
+  <g transform="translate(600, 48)">
+    <rect x="-300" y="-18" width="600" height="36" rx="18" fill="#0d1424" stroke="#00f5d4" stroke-width="1.5"/>
+    <circle cx="-274" cy="0" r="5" fill="#00f5d4"/>
+    <text x="-258" y="4" fill="#f8fafc" font-size="13" font-weight="700">The Sounding Line — Interactive Recency Scrub Gauge</text>
+    <text x="190" y="4" fill="#60cdff" font-size="11" class="mono">width &gt;= 1000px</text>
+  </g>
+
+  <!-- Left Rail Visualization -->
+  <g transform="translate(130, 110)">
+    <rect width="310" height="585" rx="16" fill="#0c1322" stroke="#1e293b" stroke-width="2"/>
+    <text x="26" y="38" fill="#00f5d4" font-size="12" font-weight="700" class="mono">LEFT RAIL GAUGE</text>
+
+    <!-- Vertical Sounding Line -->
+    <line x1="115" y1="80" x2="115" y2="540" stroke="url(#railGrad)" stroke-width="3"/>
+
+    <!-- Ticks and Labels -->
+    <g class="mono" font-size="12" fill="#94a3b8" text-anchor="end">
+      <text x="95" y="84" fill="#00f5d4" font-weight="700">now ≈</text>
+      <text x="95" y="142">30s</text>
+      <text x="95" y="198">1m</text>
+      <text x="95" y="256">3m</text>
+      <text x="95" y="314">7m</text>
+      <text x="95" y="372">15m</text>
+      <text x="95" y="430">31m</text>
+      <text x="95" y="486">1h</text>
+      <text x="95" y="544">2h+</text>
+    </g>
+
+    <!-- Tick Marks -->
+    <g stroke="#475569" stroke-width="1.5">
+      <line x1="106" y1="80" x2="124" y2="80" stroke="#00f5d4"/>
+      <line x1="108" y1="138" x2="122" y2="138"/>
+      <line x1="108" y1="194" x2="122" y2="194"/>
+      <line x1="108" y1="252" x2="122" y2="252"/>
+      <line x1="108" y1="310" x2="122" y2="310"/>
+      <line x1="108" y1="368" x2="122" y2="368"/>
+      <line x1="108" y1="426" x2="122" y2="426"/>
+      <line x1="108" y1="482" x2="122" y2="482"/>
+      <line x1="108" y1="540" x2="122" y2="540"/>
+    </g>
+
+    <!-- Window Dots (Solid = live tracked, Hollow = startup estimated) -->
+    <circle cx="145" cy="80" r="6" fill="#00f5d4"/>
+    <circle cx="163" cy="80" r="6" fill="#60cdff"/>
+    <circle cx="145" cy="146" r="6" fill="#60cdff"/>
+    <circle cx="145" cy="204" r="6" fill="#94a3b8"/>
+    <circle cx="163" cy="204" r="6" fill="#94a3b8"/>
+    <circle cx="145" cy="268" r="6" fill="#0c1322" stroke="#94a3b8" stroke-width="2"/>
+    <circle cx="145" cy="340" r="6" fill="#0c1322" stroke="#64748b" stroke-width="2"/>
+    <circle cx="145" cy="442" r="6" fill="#0c1322" stroke="#64748b" stroke-width="2"/>
+    <circle cx="145" cy="522" r="6" fill="#0c1322" stroke="#475569" stroke-width="2"/>
+
+    <!-- Animated Active Lead Diamond -->
+    <g transform="translate(115, 80)" class="anim-diamond" filter="url(#glowSound)">
+      <polygon points="0,-10 10,0 0,10 -10,0" fill="#00f5d4" stroke="#ffffff" stroke-width="1.5"/>
+    </g>
+
+    <!-- Legend Inside Rail -->
+    <g transform="translate(185, 95)" font-size="11" fill="#cbd5e1">
+      <text x="0" y="0" font-weight="700" fill="#00f5d4">Solid Dot</text>
+      <text x="0" y="16" fill="#94a3b8">Live-tracked</text>
+      <text x="0" y="30" fill="#94a3b8">via WinEvent</text>
+
+      <text x="0" y="165" font-weight="700" fill="#cbd5e1">Hollow Dot</text>
+      <text x="0" y="181" fill="#94a3b8">Estimated from</text>
+      <text x="0" y="195" fill="#94a3b8">initial Z-order</text>
+    </g>
+  </g>
+
+  <!-- Right Explanations -->
+  <g transform="translate(490, 110)">
+    <rect width="580" height="175" rx="14" fill="#0e1729" stroke="#00f5d4" stroke-opacity="0.45" stroke-width="1.5"/>
+    <text x="26" y="38" fill="#00f5d4" font-size="15" font-weight="700">1. Click or Drag to Time-Scrub</text>
+    <text x="26" y="68" fill="#e2e8f0" font-size="13">Pointer capture (SetCapture) locks onto the gauge rail while dragging.</text>
+    <text x="26" y="92" fill="#94a3b8" font-size="13">layout::nearest_mark() maps cursor (x, y) to the closest depth row &amp; column,</text>
+    <text x="26" y="116" fill="#94a3b8" font-size="13">immediately jumping the 3D camera with 220ms OutCubic easing.</text>
+    <rect x="26" y="132" width="528" height="28" rx="6" fill="#15233c"/>
+    <text x="40" y="151" fill="#60cdff" font-size="11" class="mono">Hit-test: nearest_mark(&amp;gauge_marks, cursor_y, column_index)</text>
+
+    <rect y="205" width="580" height="175" rx="14" fill="#0e1729" stroke="#60cdff" stroke-opacity="0.45" stroke-width="1.5"/>
+    <text x="26" y="243" fill="#60cdff" font-size="15" font-weight="700">2. Collision-Free Dot Grouping</text>
+    <text x="26" y="273" fill="#e2e8f0" font-size="13">Windows focused within the same vertical band automatically stack horizontally</text>
+    <text x="26" y="297" fill="#94a3b8" font-size="13">into side-by-side columns so every open window remains individually clickable.</text>
+    <rect x="26" y="318" width="528" height="40" rx="6" fill="#15233c"/>
+    <text x="40" y="343" fill="#00f5d4" font-size="11" class="mono">Solid = EVENT_SYSTEM_FOREGROUND observed  |  Hollow = startup Z-order seed</text>
+
+    <rect y="410" width="580" height="175" rx="14" fill="#0e1729" stroke="#8b5cf6" stroke-opacity="0.55" stroke-width="1.5"/>
+    <text x="26" y="448" fill="#c084fc" font-size="15" font-weight="700">3. Live Filter Synchronization</text>
+    <text x="26" y="478" fill="#e2e8f0" font-size="13">Typing a search query dims non-matching dots and keeps matching windows</text>
+    <text x="26" y="502" fill="#94a3b8" font-size="13">illuminated at their true temporal depths — showing instantly whether a match</text>
+    <text x="26" y="526" fill="#94a3b8" font-size="13">was touched seconds ago or hours ago.</text>
+    <rect x="26" y="542" width="528" height="28" rx="6" fill="#1b1838"/>
+    <text x="40" y="561" fill="#c084fc" font-size="11" class="mono">Depth animation: scene_depth OutCubic 260ms</text>
+  </g>
+</svg>

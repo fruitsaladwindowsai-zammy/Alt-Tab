@@ -39,7 +39,11 @@ impl Default for Config {
 impl Config {
     pub fn config_path() -> Option<PathBuf> {
         if let Some(appdata) = std::env::var_os("APPDATA") {
-            return Some(PathBuf::from(appdata).join("winscroller-alt-tab").join("config.toml"));
+            return Some(
+                PathBuf::from(appdata)
+                    .join("winscroller-alt-tab")
+                    .join("config.toml"),
+            );
         }
         None
     }
@@ -73,10 +77,131 @@ font-family = "Segoe UI"
 font-scale = 1.0
 show-scratchpads = true
 open-on-single = false
+
+# Optional custom hex color overrides (#rgb, #rrggbb, or #aarrggbb):
+# foreground = "#f3f3f5"
+# background = "#1c1c1e"
+# accent = "#60cdff"
+# urgent = "#ff6b6b"
 "##;
             let _ = fs::write(&path, template);
         }
         Some(path)
+    }
+
+    pub fn validate_toml(input: &str) -> Result<Self, Vec<String>> {
+        let mut cfg = Self::default();
+        let mut errors = Vec::new();
+        let mut in_section = true;
+
+        for (idx, raw_line) in input.lines().enumerate() {
+            let line_no = idx + 1;
+            let line = strip_comment(raw_line).trim();
+            if line.is_empty() {
+                continue;
+            }
+            if line.starts_with('[') && line.ends_with(']') {
+                let section = line[1..line.len() - 1].trim().to_ascii_lowercase();
+                in_section = section == "winscroller" || section == "fathom";
+                if !in_section {
+                    errors.push(format!(
+                        "line {line_no}: unknown section [{section}] (expected [winscroller] or [fathom])"
+                    ));
+                }
+                continue;
+            }
+            if !in_section {
+                continue;
+            }
+            let Some((key, val)) = line.split_once('=') else {
+                errors.push(format!("line {line_no}: expected 'key = value'"));
+                continue;
+            };
+            let k = key.trim().to_ascii_lowercase();
+            let v = unquote(val.trim());
+            match k.as_str() {
+                "corner-radius" | "corner_radius" => match v.parse::<f64>() {
+                    Ok(n) if n.is_finite() && n >= 0.0 => cfg.corner_radius = n,
+                    _ => errors.push(format!(
+                        "line {line_no}: '{k}' must be a non-negative number, got '{v}'"
+                    )),
+                },
+                "border-width" | "border_width" => match v.parse::<f64>() {
+                    Ok(n) if n.is_finite() && n >= 0.0 => cfg.border_width = n,
+                    _ => errors.push(format!(
+                        "line {line_no}: '{k}' must be a non-negative number, got '{v}'"
+                    )),
+                },
+                "font-family" | "font_family" => {
+                    if v.is_empty() {
+                        errors.push(format!("line {line_no}: '{k}' cannot be empty"));
+                    } else {
+                        cfg.font_family = v.to_string();
+                    }
+                }
+                "font-scale" | "font_scale" => match v.parse::<f64>() {
+                    Ok(n) if n.is_finite() && n > 0.0 => cfg.font_scale = n.clamp(0.7, 2.0),
+                    _ => errors.push(format!(
+                        "line {line_no}: '{k}' must be a positive number (clamped to 0.7..=2.0), got '{v}'"
+                    )),
+                },
+                "show-scratchpads" | "show_scratchpads" => {
+                    if v.eq_ignore_ascii_case("true") {
+                        cfg.show_scratchpads = true;
+                    } else if v.eq_ignore_ascii_case("false") {
+                        cfg.show_scratchpads = false;
+                    } else {
+                        errors.push(format!(
+                            "line {line_no}: '{k}' must be true or false, got '{v}'"
+                        ));
+                    }
+                }
+                "open-on-single" | "open_on_single" => {
+                    if v.eq_ignore_ascii_case("true") {
+                        cfg.open_on_single = true;
+                    } else if v.eq_ignore_ascii_case("false") {
+                        cfg.open_on_single = false;
+                    } else {
+                        errors.push(format!(
+                            "line {line_no}: '{k}' must be true or false, got '{v}'"
+                        ));
+                    }
+                }
+                "foreground" => match Rgba::parse(v) {
+                    Some(c) => cfg.custom_foreground = Some(c),
+                    None => errors.push(format!(
+                        "line {line_no}: '{k}' must be #rgb, #rrggbb, or #aarrggbb, got '{v}'"
+                    )),
+                },
+                "background" => match Rgba::parse(v) {
+                    Some(c) => cfg.custom_background = Some(c),
+                    None => errors.push(format!(
+                        "line {line_no}: '{k}' must be #rgb, #rrggbb, or #aarrggbb, got '{v}'"
+                    )),
+                },
+                "accent" => match Rgba::parse(v) {
+                    Some(c) => cfg.custom_accent = Some(c),
+                    None => errors.push(format!(
+                        "line {line_no}: '{k}' must be #rgb, #rrggbb, or #aarrggbb, got '{v}'"
+                    )),
+                },
+                "urgent" => match Rgba::parse(v) {
+                    Some(c) => cfg.custom_urgent = Some(c),
+                    None => errors.push(format!(
+                        "line {line_no}: '{k}' must be #rgb, #rrggbb, or #aarrggbb, got '{v}'"
+                    )),
+                },
+                // Legacy key from earlier builds; ignored because the plain Windows theme is used.
+                "theme" => {}
+                _ => errors.push(format!("line {line_no}: unrecognized key '{k}'")),
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(cfg)
+        } else {
+            Err(errors)
+        }
     }
 
     pub fn apply_toml(&mut self, input: &str) {
@@ -213,5 +338,30 @@ accent = "#ff00aa" # inline comment
         assert!(cfg.open_on_single);
         assert!(!cfg.show_scratchpads);
         assert!(cfg.custom_accent.is_some());
+    }
+
+    #[test]
+    fn validates_toml_and_reports_invalid_fields() {
+        let valid = r##"
+[winscroller]
+corner-radius = 10
+border-width = 1.0
+font-family = "Segoe UI"
+font-scale = 1.0
+show-scratchpads = true
+open-on-single = false
+accent = "#60cdff"
+"##;
+        assert!(Config::validate_toml(valid).is_ok());
+
+        let invalid = r##"
+[winscroller]
+corner-radius = -5
+font-scale = 0
+accent = "not-a-hex"
+unknown-key = 123
+"##;
+        let errs = Config::validate_toml(invalid).unwrap_err();
+        assert_eq!(errs.len(), 4);
     }
 }

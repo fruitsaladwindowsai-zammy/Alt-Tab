@@ -41,11 +41,16 @@ First public release of **Winscroller Alt+Tab** — a hardware-accelerated, spat
    ```powershell
    cargo build --release
    ```
-2. Launch:
+2. Initialize & validate config (optional):
+   ```powershell
+   .\target\release\winscroller-alt-tab.exe --init-config
+   .\target\release\winscroller-alt-tab.exe --validate
+   ```
+3. Launch:
    ```powershell
    .\target\release\winscroller-alt-tab.exe
    ```
-3. Press `Alt+Tab` to quick-switch, press `Space` while holding `Alt` to pin open, or press `Alt+\`` / `Ctrl+Alt+Space` for Browse mode.
+4. Press `Alt+Tab` to quick-switch, press `Space` while holding `Alt` to pin open, or press `Alt+\`` / `Ctrl+Alt+Space` for Browse mode.
 
 Full keybindings and gestures: see **[KEYBINDINGS.md](KEYBINDINGS.md)**.
 
@@ -54,13 +59,19 @@ Full keybindings and gestures: see **[KEYBINDINGS.md](KEYBINDINGS.md)**.
 ## CLI Options
 
 | Flag | Purpose |
-| --- | --- |
+| :--- | :--- |
 | *(none)* | Run in background with system tray icon and global hooks |
 | `--browse` | Open immediately in Browse mode (or wake an already-running instance) |
 | `--no-elevate` | Run as current user without UAC elevation prompt |
 | `--replace` | Cleanly terminate any existing instance before starting |
+| `--quit` | Gracefully exit any currently running instance |
+| `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml` |
+| `--validate` | Validate `config.toml` syntax, keys, and color values |
 | `--demo` | Open interactive demo preview with 12 windows across 8 workspaces |
 | `--render-demo <path>` | Export an offscreen `1920x1080` demo PNG and exit |
+| `--render-gallery <dir>` | Render all feature screenshots and walkthrough animation frames |
+| `-V`, `--version` | Print version information |
+| `-h`, `--help` | Print CLI usage summary |
 
 ---
 
@@ -73,6 +84,8 @@ Full keybindings and gestures: see **[KEYBINDINGS.md](KEYBINDINGS.md)**.
 
 ## Verification (`v0.1.0`)
 
-- `cargo test`: 13/13 unit tests passing (depth/fog curves, recency ordering, layout math, minimap viewport normalization, plain Windows theme contrast guarantees, controller Hold/Browse timers, Virtual Desktop creation & drag/move state logic).
-- `cargo build --release`: clean build (`0` warnings) targeting `x86_64-pc-windows-gnu` (LTO + stripped binary).
-- `--render-demo`: verified offscreen `1920x1080` D3D11/Direct2D/WIC PNG export.
+- `cargo fmt -- --check`: clean formatting across all source files.
+- `cargo clippy --all-targets`: `0` warnings.
+- `cargo test`: 14/14 unit tests passing (depth/fog curves, recency ordering, layout math, minimap viewport normalization, plain Windows theme contrast guarantees, TOML parsing & strict validation, controller Hold/Browse timers, Virtual Desktop creation & drag/move state logic).
+- `cargo build --release`: clean build (`0` warnings, LTO + stripped binary).
+- `--render-demo` & `--render-gallery`: verified offscreen `1920x1080` D3D11/Direct2D/WIC PNG export.
