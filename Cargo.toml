@@ -1,9 +1,15 @@
 [package]
 name = "winscroller-alt-tab"
 version = "0.1.0"
-edition = "2021"
-description = "Winscroller Alt+Tab — Depth-based Alt+Tab window switcher and workspace overview for Windows, visually styled after mtolhuys/fathom"
+edition = "2024"
+authors = ["Winscroller Alt+Tab contributors"]
+description = "Winscroller Alt+Tab — Depth-based Alt+Tab window switcher and Virtual Desktop workspace organizer for Windows 10/11, built in pure Rust with Direct3D 11 and Direct2D"
 license = "MIT"
+repository = "https://github.com/fruitsaladwindowsai-zammy/Alt-Tab"
+homepage = "https://fruitsaladwindowsai-zammy.github.io/Alt-Tab/"
+readme = "README.md"
+keywords = ["windows", "alt-tab", "window-switcher", "virtual-desktop", "direct2d"]
+categories = ["os::windows-apis", "gui"]
 
 [dependencies]
 windows = { version = "0.58", features = [

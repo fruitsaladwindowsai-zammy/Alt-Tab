@@ -6,15 +6,15 @@ use std::thread;
 use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::GetCurrentThreadId;
-use windows::Win32::UI::Accessibility::{SetWinEventHook, UnhookWinEvent, HWINEVENTHOOK};
+use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook, UnhookWinEvent};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, VK_CONTROL, VK_ESCAPE, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_OEM_3,
     VK_RMENU, VK_RSHIFT, VK_RWIN, VK_SPACE, VK_TAB,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, DispatchMessageW, GetMessageW, PostMessageW, PostThreadMessageW,
-    SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, EVENT_OBJECT_DESTROY,
-    EVENT_OBJECT_SHOW, EVENT_SYSTEM_FOREGROUND, KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL,
+    CallNextHookEx, DispatchMessageW, EVENT_OBJECT_DESTROY, EVENT_OBJECT_SHOW,
+    EVENT_SYSTEM_FOREGROUND, GetMessageW, KBDLLHOOKSTRUCT, MSG, PostMessageW, PostThreadMessageW,
+    SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL,
     WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WM_KEYDOWN, WM_KEYUP, WM_QUIT, WM_SYSKEYDOWN,
     WM_SYSKEYUP,
 };
@@ -159,79 +159,83 @@ impl Drop for HooksGuard {
 }
 
 unsafe extern "system" fn ll_keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    if code < 0 {
-        return CallNextHookEx(None, code, wparam, lparam);
-    }
+    unsafe {
+        if code < 0 {
+            return CallNextHookEx(None, code, wparam, lparam);
+        }
 
-    let kb = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
-    let msg = wparam.0 as u32;
-    let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
-    let is_up = msg == WM_KEYUP || msg == WM_SYSKEYUP;
-    let vk = kb.vkCode as u16;
-    let target = HWND(TARGET_HWND.load(Ordering::Relaxed) as *mut _);
+        let kb = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
+        let msg = wparam.0 as u32;
+        let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
+        let is_up = msg == WM_KEYUP || msg == WM_SYSKEYUP;
+        let vk = kb.vkCode as u16;
+        let target = HWND(TARGET_HWND.load(Ordering::Relaxed) as *mut _);
 
-    if vk == VK_LMENU.0 || vk == VK_RMENU.0 || vk == VK_MENU.0 {
+        if vk == VK_LMENU.0 || vk == VK_RMENU.0 || vk == VK_MENU.0 {
+            if is_down {
+                ALT_TRACKED_DOWN.store(true, Ordering::Relaxed);
+            } else if is_up {
+                ALT_TRACKED_DOWN.store(false, Ordering::Relaxed);
+                if FATHOM_OPEN.load(Ordering::Relaxed) && FATHOM_HOLDING.load(Ordering::Relaxed) {
+                    let _ = PostMessageW(target, WM_FATHOM_ALT_RELEASE, WPARAM(0), LPARAM(0));
+                }
+            }
+            // Always pass modifier transitions to the OS so Alt never gets stuck down.
+            return CallNextHookEx(None, code, wparam, lparam);
+        }
+
+        if is_up && vk == VK_TAB.0 && TAB_SWALLOWED.swap(false, Ordering::Relaxed) {
+            return LRESULT(1);
+        }
+
         if is_down {
-            ALT_TRACKED_DOWN.store(true, Ordering::Relaxed);
-        } else if is_up {
-            ALT_TRACKED_DOWN.store(false, Ordering::Relaxed);
-            if FATHOM_OPEN.load(Ordering::Relaxed) && FATHOM_HOLDING.load(Ordering::Relaxed) {
-                let _ = PostMessageW(target, WM_FATHOM_ALT_RELEASE, WPARAM(0), LPARAM(0));
+            let alt = ALT_TRACKED_DOWN.load(Ordering::Relaxed)
+                || is_alt_down()
+                || (kb.flags.0 & 0x20) != 0; // LLKHF_ALTDOWN = 0x20
+            let ctrl = is_ctrl_down();
+            let win = is_win_down();
+
+            // Alt+Tab / Alt+Shift+Tab -> Hold chord step (swallow Tab so Windows switcher never opens).
+            if vk == VK_TAB.0 && alt && !ctrl && !win {
+                TAB_SWALLOWED.store(true, Ordering::Relaxed);
+                let delta: isize = if is_shift_down() { -1 } else { 1 };
+                let _ = PostMessageW(
+                    target,
+                    WM_FATHOM_CHORD_STEP,
+                    WPARAM(delta as usize),
+                    LPARAM(0),
+                );
+                return LRESULT(1);
+            }
+
+            // Ctrl+Alt+Space or Alt+` -> Browse mode toggle.
+            if ((vk == VK_SPACE.0 && alt && ctrl && !win)
+                || (vk == VK_OEM_3.0 && alt && !ctrl && !win))
+                && !FATHOM_OPEN.load(Ordering::Relaxed)
+            {
+                let _ = PostMessageW(target, WM_FATHOM_OPEN_BROWSE, WPARAM(0), LPARAM(0));
+                return LRESULT(1);
+            }
+
+            // During the 90 ms pre-reveal hold window, intercept navigation keys before the
+            // foreground app sees them and forward to Winscroller.
+            if FATHOM_OPEN.load(Ordering::Relaxed)
+                && !FATHOM_REVEALED.load(Ordering::Relaxed)
+                && (vk == VK_ESCAPE.0 || vk == VK_SPACE.0 || vk == VK_TAB.0)
+            {
+                let shift_bit = if is_shift_down() { 1usize } else { 0 };
+                let _ = PostMessageW(
+                    target,
+                    WM_FATHOM_PRE_REVEAL_KEY,
+                    WPARAM(vk as usize),
+                    LPARAM(shift_bit as isize),
+                );
+                return LRESULT(1);
             }
         }
-        // Always pass modifier transitions to the OS so Alt never gets stuck down.
-        return CallNextHookEx(None, code, wparam, lparam);
+
+        CallNextHookEx(None, code, wparam, lparam)
     }
-
-    if is_up && vk == VK_TAB.0 && TAB_SWALLOWED.swap(false, Ordering::Relaxed) {
-        return LRESULT(1);
-    }
-
-    if is_down {
-        let alt =
-            ALT_TRACKED_DOWN.load(Ordering::Relaxed) || is_alt_down() || (kb.flags.0 & 0x20) != 0; // LLKHF_ALTDOWN = 0x20
-        let ctrl = is_ctrl_down();
-        let win = is_win_down();
-
-        // Alt+Tab / Alt+Shift+Tab -> Hold chord step (swallow Tab so Windows switcher never opens).
-        if vk == VK_TAB.0 && alt && !ctrl && !win {
-            TAB_SWALLOWED.store(true, Ordering::Relaxed);
-            let delta: isize = if is_shift_down() { -1 } else { 1 };
-            let _ = PostMessageW(
-                target,
-                WM_FATHOM_CHORD_STEP,
-                WPARAM(delta as usize),
-                LPARAM(0),
-            );
-            return LRESULT(1);
-        }
-
-        // Ctrl+Alt+Space or Alt+` -> Browse mode toggle.
-        if ((vk == VK_SPACE.0 && alt && ctrl && !win) || (vk == VK_OEM_3.0 && alt && !ctrl && !win))
-            && !FATHOM_OPEN.load(Ordering::Relaxed)
-        {
-            let _ = PostMessageW(target, WM_FATHOM_OPEN_BROWSE, WPARAM(0), LPARAM(0));
-            return LRESULT(1);
-        }
-
-        // During the 90 ms pre-reveal hold window, intercept navigation keys before the
-        // foreground app sees them and forward to Winscroller.
-        if FATHOM_OPEN.load(Ordering::Relaxed)
-            && !FATHOM_REVEALED.load(Ordering::Relaxed)
-            && (vk == VK_ESCAPE.0 || vk == VK_SPACE.0 || vk == VK_TAB.0)
-        {
-            let shift_bit = if is_shift_down() { 1usize } else { 0 };
-            let _ = PostMessageW(
-                target,
-                WM_FATHOM_PRE_REVEAL_KEY,
-                WPARAM(vk as usize),
-                LPARAM(shift_bit as isize),
-            );
-            return LRESULT(1);
-        }
-    }
-
-    CallNextHookEx(None, code, wparam, lparam)
 }
 
 unsafe extern "system" fn win_event_proc(
@@ -243,40 +247,42 @@ unsafe extern "system" fn win_event_proc(
     _thread: u32,
     _time: u32,
 ) {
-    if id_object != 0 || id_child != 0 || hwnd.0.is_null() {
-        return;
-    }
-    let target = TARGET_HWND.load(Ordering::Relaxed);
-    let raw = hwnd.0 as isize;
-    if raw == target {
-        return;
-    }
-    let target_hwnd = HWND(target as *mut _);
-    match event {
-        EVENT_SYSTEM_FOREGROUND => {
-            let _ = PostMessageW(
-                target_hwnd,
-                WM_FATHOM_FOCUS_CHANGED,
-                WPARAM(raw as usize),
-                LPARAM(0),
-            );
+    unsafe {
+        if id_object != 0 || id_child != 0 || hwnd.0.is_null() {
+            return;
         }
-        EVENT_OBJECT_SHOW => {
-            let _ = PostMessageW(
-                target_hwnd,
-                WM_FATHOM_WINDOW_OPENED,
-                WPARAM(raw as usize),
-                LPARAM(0),
-            );
+        let target = TARGET_HWND.load(Ordering::Relaxed);
+        let raw = hwnd.0 as isize;
+        if raw == target {
+            return;
         }
-        EVENT_OBJECT_DESTROY => {
-            let _ = PostMessageW(
-                target_hwnd,
-                WM_FATHOM_WINDOW_CLOSED,
-                WPARAM(raw as usize),
-                LPARAM(0),
-            );
+        let target_hwnd = HWND(target as *mut _);
+        match event {
+            EVENT_SYSTEM_FOREGROUND => {
+                let _ = PostMessageW(
+                    target_hwnd,
+                    WM_FATHOM_FOCUS_CHANGED,
+                    WPARAM(raw as usize),
+                    LPARAM(0),
+                );
+            }
+            EVENT_OBJECT_SHOW => {
+                let _ = PostMessageW(
+                    target_hwnd,
+                    WM_FATHOM_WINDOW_OPENED,
+                    WPARAM(raw as usize),
+                    LPARAM(0),
+                );
+            }
+            EVENT_OBJECT_DESTROY => {
+                let _ = PostMessageW(
+                    target_hwnd,
+                    WM_FATHOM_WINDOW_CLOSED,
+                    WPARAM(raw as usize),
+                    LPARAM(0),
+                );
+            }
+            _ => {}
         }
-        _ => {}
     }
 }

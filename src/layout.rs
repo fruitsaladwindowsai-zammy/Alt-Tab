@@ -366,12 +366,11 @@ fn split_shared_rects(rects: &mut [Rect], known: &[Option<Rect>]) {
         let Some(ka) = known[a] else { continue };
         let mut same = vec![a];
         for b in (a + 1)..rects.len() {
-            if !done[b] {
-                if let Some(kb) = known[b] {
-                    if same_rect(ka, kb) {
-                        same.push(b);
-                    }
-                }
+            if !done[b]
+                && let Some(kb) = known[b]
+                && same_rect(ka, kb)
+            {
+                same.push(b);
             }
         }
         let base = rects[a];

@@ -43,11 +43,11 @@ impl RecencyState {
         if hwnd == 0 {
             return false;
         }
-        if let Some(prev) = self.active {
-            if prev != hwnd {
-                self.last_active.insert(prev, now_ms);
-                self.estimated.remove(&prev);
-            }
+        if let Some(prev) = self.active
+            && prev != hwnd
+        {
+            self.last_active.insert(prev, now_ms);
+            self.estimated.remove(&prev);
         }
         self.last_active.insert(hwnd, now_ms);
         self.estimated.remove(&hwnd);

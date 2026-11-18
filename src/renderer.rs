@@ -10,48 +10,46 @@ use crate::layout::{self, OverlayMetrics, Rect};
 use crate::palette::{DerivedPalette, Rgba};
 use crate::win_capture::{BgraImage, MediaStore};
 use std::collections::HashMap;
-use windows::core::{Interface, HSTRING, PCWSTR};
 use windows::Win32::Foundation::{HWND, RECT};
 use windows::Win32::Graphics::Direct2D::Common::{
-    D2D1_ALPHA_MODE_IGNORE, D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_BEZIER_SEGMENT, D2D1_COLOR_F,
-    D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, D2D1_GRADIENT_STOP, D2D1_PIXEL_FORMAT,
-    D2D_POINT_2F, D2D_RECT_F, D2D_SIZE_U,
+    D2D_POINT_2F, D2D_RECT_F, D2D_SIZE_U, D2D1_ALPHA_MODE_IGNORE, D2D1_ALPHA_MODE_PREMULTIPLIED,
+    D2D1_BEZIER_SEGMENT, D2D1_COLOR_F, D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED,
+    D2D1_GRADIENT_STOP, D2D1_PIXEL_FORMAT,
 };
 use windows::Win32::Graphics::Direct2D::{
-    D2D1CreateFactory, ID2D1Bitmap, ID2D1Bitmap1, ID2D1Device, ID2D1DeviceContext, ID2D1Factory1,
-    ID2D1LinearGradientBrush, ID2D1RenderTarget, ID2D1RoundedRectangleGeometry,
-    ID2D1SolidColorBrush, D2D1_BITMAP_OPTIONS_CANNOT_DRAW, D2D1_BITMAP_OPTIONS_TARGET,
-    D2D1_BITMAP_PROPERTIES, D2D1_BITMAP_PROPERTIES1, D2D1_BRUSH_PROPERTIES,
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, D2D1_ELLIPSE, D2D1_EXTEND_MODE_CLAMP,
-    D2D1_FACTORY_TYPE_SINGLE_THREADED, D2D1_GAMMA_2_2, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
-    D2D1_INTERPOLATION_MODE_LINEAR, D2D1_LAYER_OPTIONS_NONE, D2D1_LAYER_PARAMETERS,
-    D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES, D2D1_ROUNDED_RECT, D2D1_UNIT_MODE_DIPS,
+    D2D1_BITMAP_OPTIONS_CANNOT_DRAW, D2D1_BITMAP_OPTIONS_TARGET, D2D1_BITMAP_PROPERTIES,
+    D2D1_BITMAP_PROPERTIES1, D2D1_BRUSH_PROPERTIES, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, D2D1_ELLIPSE,
+    D2D1_EXTEND_MODE_CLAMP, D2D1_FACTORY_TYPE_SINGLE_THREADED, D2D1_GAMMA_2_2,
+    D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, D2D1_INTERPOLATION_MODE_LINEAR,
+    D2D1_LAYER_OPTIONS_NONE, D2D1_LAYER_PARAMETERS, D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES,
+    D2D1_ROUNDED_RECT, D2D1_UNIT_MODE_DIPS, D2D1CreateFactory, ID2D1Bitmap, ID2D1Bitmap1,
+    ID2D1Device, ID2D1DeviceContext, ID2D1Factory1, ID2D1LinearGradientBrush, ID2D1RenderTarget,
+    ID2D1RoundedRectangleGeometry, ID2D1SolidColorBrush,
 };
 use windows::Win32::Graphics::Direct3D::{
     D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP, D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
     D3D_FEATURE_LEVEL_11_1,
 };
 use windows::Win32::Graphics::Direct3D11::{
-    D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D,
     D3D11_BIND_RENDER_TARGET, D3D11_CPU_ACCESS_READ, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
     D3D11_MAP_READ, D3D11_SDK_VERSION, D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT,
-    D3D11_USAGE_STAGING,
+    D3D11_USAGE_STAGING, D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D,
 };
 use windows::Win32::Graphics::DirectWrite::{
-    DWriteCreateFactory, IDWriteFactory, IDWriteInlineObject, IDWriteTextFormat, IDWriteTextLayout,
     DWRITE_FACTORY_TYPE_SHARED, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_ITALIC,
     DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_NEAR,
     DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_LEADING, DWRITE_TEXT_ALIGNMENT_TRAILING,
     DWRITE_TRIMMING, DWRITE_TRIMMING_GRANULARITY_CHARACTER, DWRITE_WORD_WRAPPING_NO_WRAP,
+    DWriteCreateFactory, IDWriteFactory, IDWriteInlineObject, IDWriteTextFormat, IDWriteTextLayout,
 };
 use windows::Win32::Graphics::Dxgi::Common::{
     DXGI_ALPHA_MODE_IGNORE, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC,
 };
 use windows::Win32::Graphics::Dxgi::{
-    IDXGIDevice, IDXGIFactory2, IDXGISurface, IDXGISwapChain1, DXGI_PRESENT, DXGI_SCALING_STRETCH,
-    DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG, DXGI_SWAP_EFFECT_FLIP_DISCARD,
-    DXGI_USAGE_RENDER_TARGET_OUTPUT,
+    DXGI_PRESENT, DXGI_SCALING_STRETCH, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG,
+    DXGI_SWAP_EFFECT_FLIP_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT, IDXGIDevice, IDXGIFactory2,
+    IDXGISurface, IDXGISwapChain1,
 };
 use windows::Win32::Graphics::Imaging::{
     GUID_ContainerFormatPng, GUID_WICPixelFormat32bppBGRA, IWICImagingFactory,
@@ -59,6 +57,7 @@ use windows::Win32::Graphics::Imaging::{
 };
 use windows::Win32::System::Com::STGM;
 use windows::Win32::UI::WindowsAndMessaging::SW_SHOW;
+use windows::core::{HSTRING, Interface, PCWSTR};
 
 #[derive(Clone, Debug, Default)]
 pub struct HitRegions {
@@ -361,28 +360,25 @@ impl Renderer {
                 .get(&hwnd)
                 .map(|c| c.generation != entry.generation)
                 .unwrap_or(true);
-            if needs {
-                if let Some(bmp) = self.upload_bgra(&entry.image) {
-                    self.snapshot_bitmaps.insert(
-                        hwnd,
-                        CachedBitmap {
-                            generation: entry.generation,
-                            bitmap: bmp,
-                        },
-                    );
-                }
+            if needs && let Some(bmp) = self.upload_bgra(&entry.image) {
+                self.snapshot_bitmaps.insert(
+                    hwnd,
+                    CachedBitmap {
+                        generation: entry.generation,
+                        bitmap: bmp,
+                    },
+                );
             }
         }
         self.snapshot_bitmaps
             .retain(|k, _| store.snapshots.contains_key(k));
 
         for (&hwnd, opt_img) in &store.icons {
-            if let Some(img) = opt_img {
-                if !self.icon_bitmaps.contains_key(&hwnd) {
-                    if let Some(bmp) = self.upload_bgra(img) {
-                        self.icon_bitmaps.insert(hwnd, bmp);
-                    }
-                }
+            if let Some(img) = opt_img
+                && !self.icon_bitmaps.contains_key(&hwnd)
+                && let Some(bmp) = self.upload_bgra(img)
+            {
+                self.icon_bitmaps.insert(hwnd, bmp);
             }
         }
         self.icon_bitmaps.retain(|k, _| store.icons.contains_key(k));
@@ -393,10 +389,8 @@ impl Renderer {
                 .as_ref()
                 .map(|(p, _)| p != path)
                 .unwrap_or(true);
-            if needs {
-                if let Some(bmp) = self.upload_bgra(img) {
-                    self.wallpaper_bitmap = Some((path.clone(), bmp));
-                }
+            if needs && let Some(bmp) = self.upload_bgra(img) {
+                self.wallpaper_bitmap = Some((path.clone(), bmp));
             }
         }
     }
@@ -701,10 +695,10 @@ impl Renderer {
                 continue;
             }
             let r = slot as f64 - ctrl.camera_slot.current;
-            if let Some(geom) = layout::deep_plane(m.stage, r) {
-                if geom.opacity > 0.01 {
-                    visible.push((entry_idx, geom));
-                }
+            if let Some(geom) = layout::deep_plane(m.stage, r)
+                && geom.opacity > 0.01
+            {
+                visible.push((entry_idx, geom));
             }
         }
         // Sort ascending by z so back cards render first and front cards occlude them cleanly.
@@ -984,42 +978,40 @@ impl Renderer {
             if cached_snap.is_some()
                 && (entry.minimized || !entry.on_current_desktop)
                 && fitted.height > 70.0 * m.unit
+                && let Some(snap_entry) = store.snapshots.get(&entry.hwnd)
             {
-                if let Some(snap_entry) = store.snapshots.get(&entry.hwnd) {
-                    let secs = (now_ms.saturating_sub(snap_entry.taken_at_ms)) as f64 / 1000.0;
-                    let badge = format!("last seen {}", field::age_label(secs, false, false));
-                    let bsz = (11.0 * m.text_unit * depth_scale.max(0.8)).max(9.0) as f32;
-                    let bw =
-                        self.fonts.measure_width(&badge, bsz, false, false) as f64 + 14.0 * m.unit;
-                    let bh = bsz as f64 + 10.0 * m.unit;
-                    let bm = 8.0 * m.unit * depth_scale + 2.0;
-                    let br = rect_f(
-                        frame_rect.left as f64 + bm,
-                        frame_rect.bottom as f64 - bm - bh,
-                        bw,
-                        bh,
-                    );
-                    let brad = corner_radius.min(bh / 2.0) as f32;
-                    self.fill_rounded_rect(br, brad, theme.panel, card_alpha)?;
-                    self.draw_rounded_rect(
-                        br,
-                        brad,
-                        theme.panel_border,
-                        border_width as f32,
-                        card_alpha,
-                    )?;
-                    self.draw_text(
-                        &badge,
-                        br,
-                        bsz,
-                        false,
-                        false,
-                        theme.text_soft,
-                        card_alpha,
-                        DWRITE_TEXT_ALIGNMENT_CENTER,
-                        DWRITE_PARAGRAPH_ALIGNMENT_CENTER,
-                    )?;
-                }
+                let secs = (now_ms.saturating_sub(snap_entry.taken_at_ms)) as f64 / 1000.0;
+                let badge = format!("last seen {}", field::age_label(secs, false, false));
+                let bsz = (11.0 * m.text_unit * depth_scale.max(0.8)).max(9.0) as f32;
+                let bw = self.fonts.measure_width(&badge, bsz, false, false) as f64 + 14.0 * m.unit;
+                let bh = bsz as f64 + 10.0 * m.unit;
+                let bm = 8.0 * m.unit * depth_scale + 2.0;
+                let br = rect_f(
+                    frame_rect.left as f64 + bm,
+                    frame_rect.bottom as f64 - bm - bh,
+                    bw,
+                    bh,
+                );
+                let brad = corner_radius.min(bh / 2.0) as f32;
+                self.fill_rounded_rect(br, brad, theme.panel, card_alpha)?;
+                self.draw_rounded_rect(
+                    br,
+                    brad,
+                    theme.panel_border,
+                    border_width as f32,
+                    card_alpha,
+                )?;
+                self.draw_text(
+                    &badge,
+                    br,
+                    bsz,
+                    false,
+                    false,
+                    theme.text_soft,
+                    card_alpha,
+                    DWRITE_TEXT_ALIGNMENT_CENTER,
+                    DWRITE_PARAGRAPH_ALIGNMENT_CENTER,
+                )?;
             }
 
             // Selection ring or urgent border
@@ -2165,11 +2157,7 @@ impl Renderer {
                 * if ctrl.dragging_entry == Some(entry_idx) {
                     0.30
                 } else if shown {
-                    if parked && !selected {
-                        0.62
-                    } else {
-                        1.0
-                    }
+                    if parked && !selected { 0.62 } else { 1.0 }
                 } else {
                     0.22
                 };

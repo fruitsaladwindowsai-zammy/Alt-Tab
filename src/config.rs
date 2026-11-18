@@ -2,7 +2,7 @@
 
 use crate::palette::{self, DerivedPalette, Rgba, ThemeSource};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 #[derive(Clone, Debug)]
@@ -48,10 +48,20 @@ impl Config {
         None
     }
 
-    pub fn load_or_default() -> (Self, Option<SystemTime>) {
+    pub fn crash_log_path() -> PathBuf {
+        Self::config_path()
+            .and_then(|p| p.parent().map(|d| d.join("crash.log")))
+            .unwrap_or_else(|| PathBuf::from("winscroller-alt-tab-crash.log"))
+    }
+
+    pub fn load_from_path(override_path: Option<&Path>) -> (Self, Option<SystemTime>) {
         let mut cfg = Self::default();
-        let Some(path) = Self::config_path() else {
-            return (cfg, None);
+        let path = match override_path {
+            Some(p) => p.to_path_buf(),
+            None => match Self::config_path() {
+                Some(p) => p,
+                None => return (cfg, None),
+            },
         };
         let modified = fs::metadata(&path).and_then(|m| m.modified()).ok();
         if let Ok(contents) = fs::read_to_string(&path) {
@@ -60,8 +70,11 @@ impl Config {
         (cfg, modified)
     }
 
-    pub fn ensure_default_file() -> Option<PathBuf> {
-        let path = Self::config_path()?;
+    pub fn ensure_default_file_at(override_path: Option<&Path>) -> Option<PathBuf> {
+        let path = match override_path {
+            Some(p) => p.to_path_buf(),
+            None => Self::config_path()?,
+        };
         if !path.exists() {
             if let Some(parent) = path.parent() {
                 let _ = fs::create_dir_all(parent);
@@ -226,17 +239,19 @@ open-on-single = false
             let v = unquote(val.trim());
             match k.as_str() {
                 "corner-radius" | "corner_radius" => {
-                    if let Ok(n) = v.parse::<f64>() {
-                        if n.is_finite() && n >= 0.0 {
-                            self.corner_radius = n;
-                        }
+                    if let Ok(n) = v.parse::<f64>()
+                        && n.is_finite()
+                        && n >= 0.0
+                    {
+                        self.corner_radius = n;
                     }
                 }
                 "border-width" | "border_width" => {
-                    if let Ok(n) = v.parse::<f64>() {
-                        if n.is_finite() && n >= 0.0 {
-                            self.border_width = n;
-                        }
+                    if let Ok(n) = v.parse::<f64>()
+                        && n.is_finite()
+                        && n >= 0.0
+                    {
+                        self.border_width = n;
                     }
                 }
                 "font-family" | "font_family" => {
@@ -245,10 +260,11 @@ open-on-single = false
                     }
                 }
                 "font-scale" | "font_scale" => {
-                    if let Ok(n) = v.parse::<f64>() {
-                        if n.is_finite() && n > 0.0 {
-                            self.font_scale = n.clamp(0.7, 2.0);
-                        }
+                    if let Ok(n) = v.parse::<f64>()
+                        && n.is_finite()
+                        && n > 0.0
+                    {
+                        self.font_scale = n.clamp(0.7, 2.0);
                     }
                 }
                 "show-scratchpads" | "show_scratchpads" => {

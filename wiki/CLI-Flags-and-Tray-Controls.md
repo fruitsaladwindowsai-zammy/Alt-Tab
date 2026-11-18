@@ -5,9 +5,10 @@
 | Flag | Purpose |
 | :--- | :--- |
 | *(none)* | Run in background with tray icon & global hooks (wakes running instance into Browse mode if already active) |
+| `-c`, `--config <path>` | Use a custom `config.toml` path |
 | `--browse` | Open immediately in Browse mode (or wake running instance) |
-| `--no-elevate` | Run without UAC Administrator elevation |
-| `--replace` | Gracefully close any running instance and launch fresh |
+| `--no-elevate`, `--non-elevated` | Run without UAC Administrator elevation |
+| `-r`, `--replace` | Gracefully close any running instance and launch fresh |
 | `--quit` | Gracefully exit any running instance |
 | `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml` |
 | `--validate` | Validate `config.toml` syntax, keys, bounds & hex colors |

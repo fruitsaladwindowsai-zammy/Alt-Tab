@@ -525,15 +525,15 @@ impl Controller {
             .map(|e| self.closed.contains(&e.hwnd))
             .unwrap_or(true);
         self.dismiss();
-        if let Some(entry) = target {
-            if !closed {
-                return Action::Commit {
-                    hwnd: entry.hwnd,
-                    on_current_desktop: entry.on_current_desktop,
-                    workspace_key: entry.workspace_key,
-                    minimized: entry.minimized,
-                };
-            }
+        if let Some(entry) = target
+            && !closed
+        {
+            return Action::Commit {
+                hwnd: entry.hwnd,
+                on_current_desktop: entry.on_current_desktop,
+                workspace_key: entry.workspace_key,
+                minimized: entry.minimized,
+            };
         }
         Action::Cancel
     }

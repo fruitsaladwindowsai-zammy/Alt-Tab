@@ -61,9 +61,10 @@ Full keybindings and gestures: see **[KEYBINDINGS.md](KEYBINDINGS.md)**.
 | Flag | Purpose |
 | :--- | :--- |
 | *(none)* | Run in background with system tray icon and global hooks |
+| `-c`, `--config <path>` | Override the default `config.toml` file path |
 | `--browse` | Open immediately in Browse mode (or wake an already-running instance) |
-| `--no-elevate` | Run as current user without UAC elevation prompt |
-| `--replace` | Cleanly terminate any existing instance before starting |
+| `--no-elevate`, `--non-elevated` | Run as current user without UAC elevation prompt |
+| `-r`, `--replace` | Cleanly terminate any existing instance before starting |
 | `--quit` | Gracefully exit any currently running instance |
 | `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml` |
 | `--validate` | Validate `config.toml` syntax, keys, and color values |

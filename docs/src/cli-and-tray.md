@@ -7,9 +7,10 @@
 | Flag | Description |
 | :--- | :--- |
 | *(none)* | Run in background with system tray icon, global hooks & auto-elevation. Wakes existing instance into Browse mode if already running. |
+| `-c`, `--config <path>` | Use a custom `config.toml` path instead of `%APPDATA%\winscroller-alt-tab\config.toml`. |
 | `--browse` | Launch directly into pinned Browse mode (or wake running instance). |
-| `--no-elevate` | Run at standard user privileges without requesting UAC elevation. |
-| `--replace` | Gracefully close any running instance and start a fresh one. |
+| `--no-elevate`, `--non-elevated` | Run at standard user privileges without requesting UAC elevation. |
+| `-r`, `--replace` | Gracefully close any running instance and start a fresh one. |
 | `--quit` | Send `WM_FATHOM_QUIT` to gracefully stop a running instance and exit. |
 | `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml`. |
 | `--validate` | Strictly validate `config.toml` and report line-level errors. |

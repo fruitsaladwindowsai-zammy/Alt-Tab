@@ -11,9 +11,10 @@ Run `winscroller-alt-tab.exe` from PowerShell, Windows Terminal, or a Windows sh
 | Command | Behavior |
 | :--- | :--- |
 | `winscroller-alt-tab.exe` | Launches in the background with a system tray icon, global `WH_KEYBOARD_LL` hook, and `SetWinEventHook` recency tracker. Requests UAC elevation automatically unless already elevated or `--no-elevate` is passed. If another instance is already running, wakes it into **Browse** mode and exits. |
+| `winscroller-alt-tab.exe -c <path>` / `--config <path>` | Uses a custom `config.toml` path instead of `%APPDATA%\winscroller-alt-tab\config.toml` (works with `--init-config`, `--validate`, tray editing, and live reload). |
 | `winscroller-alt-tab.exe --browse` | Starts the switcher and immediately opens the overlay pinned in **Browse** mode (or wakes an existing running instance into Browse mode). |
-| `winscroller-alt-tab.exe --no-elevate` | Runs at standard user (Medium Integrity) privileges without requesting a UAC Administrator prompt. *(Note: Windows UIPI blocks `Alt+Tab` interception and live capture while an elevated Admin window has focus).* |
-| `winscroller-alt-tab.exe --replace` | Cleanly signals any already-running instance (`WM_FATHOM_QUIT`), waits up to 500ms for graceful shutdown, and starts a fresh instance. Ideal after rebuilding from source. |
+| `winscroller-alt-tab.exe --no-elevate` (`--non-elevated`) | Runs at standard user (Medium Integrity) privileges without requesting a UAC Administrator prompt. *(Note: Windows UIPI blocks `Alt+Tab` interception and live capture while an elevated Admin window has focus).* |
+| `winscroller-alt-tab.exe -r` / `--replace` | Cleanly signals any already-running instance (`WM_FATHOM_QUIT`), waits up to 500ms for graceful shutdown, and starts a fresh instance. Ideal after rebuilding from source. |
 | `winscroller-alt-tab.exe --quit` | Sends a graceful shutdown message (`WM_FATHOM_QUIT`) to any running instance and exits immediately. |
 | `winscroller-alt-tab.exe --init-config` | Creates a default `%APPDATA%\winscroller-alt-tab\config.toml` if one does not already exist and prints its path. |
 | `winscroller-alt-tab.exe --validate` | Parses and strictly validates `%APPDATA%\winscroller-alt-tab\config.toml`, reporting line numbers for unknown sections, invalid keys, out-of-range numbers, or malformed hex colors. Exits `0` if valid, `1` on error. |
@@ -82,3 +83,15 @@ cargo build --release
 # 4. Launch fresh instance
 .\target\release\winscroller-alt-tab.exe --replace
 ```
+
+---
+
+## Crash Diagnostics (`crash.log`)
+
+If an unexpected panic ever occurs, Winscroller Alt+Tab's panic hook automatically appends the Unix timestamp, panic message, and full backtrace to:
+
+```text
+%APPDATA%\winscroller-alt-tab\crash.log
+```
+
+Attach relevant entries from `crash.log` when filing a [Bug Report](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/issues/new?template=bug_report.md).

@@ -3,27 +3,27 @@
 use crate::controller::now_epoch_ms;
 use crate::win_platform;
 use std::collections::{HashMap, HashSet};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
-use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HWND, LPARAM, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::{
-    BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject,
-    GetDC, ReleaseDC, SelectObject, SetStretchBltMode, StretchBlt, BITMAPINFO, BITMAPINFOHEADER,
-    BI_RGB, DIB_RGB_COLORS, HALFTONE, SRCCOPY,
+    BI_RGB, BITMAPINFO, BITMAPINFOHEADER, BitBlt, CreateCompatibleBitmap, CreateCompatibleDC,
+    CreateDIBSection, DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, HALFTONE, ReleaseDC, SRCCOPY,
+    SelectObject, SetStretchBltMode, StretchBlt,
 };
 use windows::Win32::Graphics::Imaging::{
     CLSID_WICImagingFactory, GUID_WICPixelFormat32bppPBGRA, IWICImagingFactory,
     WICBitmapDitherTypeNone, WICBitmapPaletteTypeMedianCut, WICDecodeMetadataCacheOnLoad,
 };
-use windows::Win32::Storage::Xps::{PrintWindow, PRINT_WINDOW_FLAGS};
+use windows::Win32::Storage::Xps::{PRINT_WINDOW_FLAGS, PrintWindow};
 use windows::Win32::System::Com::{
-    CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
-    COINIT_APARTMENTTHREADED,
+    CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
+    CoUninitialize,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    DestroyIcon, GetWindowRect, IsIconic, PostMessageW, HICON,
+    DestroyIcon, GetWindowRect, HICON, IsIconic, PostMessageW,
 };
+use windows::core::PCWSTR;
 
 pub const WM_FATHOM_CAPTURE_READY: u32 = 0x8000 + 20;
 pub const WM_FATHOM_WALLPAPER_READY: u32 = 0x8000 + 21;
@@ -150,19 +150,19 @@ impl CaptureService {
                         }
                     }
                     CaptureJob::Wallpaper { path, max_w, max_h } => {
-                        if let Some(ref factory) = wic {
-                            if let Some(img) = decode_image_file(factory, &path, max_w, max_h) {
-                                if let Ok(mut guard) = store_bg.lock() {
-                                    guard.wallpaper = Some((path, img));
-                                }
-                                unsafe {
-                                    let _ = PostMessageW(
-                                        HWND(notify_hwnd as *mut _),
-                                        WM_FATHOM_WALLPAPER_READY,
-                                        WPARAM(0),
-                                        LPARAM(0),
-                                    );
-                                }
+                        if let Some(ref factory) = wic
+                            && let Some(img) = decode_image_file(factory, &path, max_w, max_h)
+                        {
+                            if let Ok(mut guard) = store_bg.lock() {
+                                guard.wallpaper = Some((path, img));
+                            }
+                            unsafe {
+                                let _ = PostMessageW(
+                                    HWND(notify_hwnd as *mut _),
+                                    WM_FATHOM_WALLPAPER_READY,
+                                    WPARAM(0),
+                                    LPARAM(0),
+                                );
                             }
                         }
                     }
@@ -189,10 +189,10 @@ impl CaptureService {
         if !wants {
             return;
         }
-        if let Ok(mut guard) = self.in_flight.lock() {
-            if !guard.insert(hwnd) {
-                return;
-            }
+        if let Ok(mut guard) = self.in_flight.lock()
+            && !guard.insert(hwnd)
+        {
+            return;
         }
         let _ = self.tx.send(CaptureJob::Window { hwnd });
     }

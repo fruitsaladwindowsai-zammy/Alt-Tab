@@ -1,24 +1,24 @@
 //! System tray icon and menu for background operation.
 
 use crate::config::Config;
-use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HWND, POINT};
 use windows::Win32::Graphics::Gdi::{
     CreateBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, SelectObject,
 };
 use windows::Win32::System::Registry::{
-    RegCloseKey, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW,
-    HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_SZ,
+    HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_SZ, RegCloseKey, RegDeleteValueW, RegOpenKeyExW,
+    RegQueryValueExW, RegSetValueExW,
 };
 use windows::Win32::UI::Shell::{
-    ShellExecuteW, Shell_NotifyIconW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE,
-    NOTIFYICONDATAW,
+    NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NOTIFYICONDATAW, Shell_NotifyIconW,
+    ShellExecuteW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateIconIndirect, CreatePopupMenu, DestroyIcon, DestroyMenu, GetCursorPos,
-    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_CHECKED, MF_SEPARATOR, MF_STRING,
-    TPM_BOTTOMALIGN, TPM_LEFTALIGN, WM_USER,
+    HICON, ICONINFO, MF_CHECKED, MF_SEPARATOR, MF_STRING, SetForegroundWindow, TPM_BOTTOMALIGN,
+    TPM_LEFTALIGN, TrackPopupMenu, WM_USER,
 };
+use windows::core::PCWSTR;
 
 pub const WM_TRAY_ICON: u32 = WM_USER + 40;
 pub const CMD_BROWSE: usize = 1001;
@@ -119,17 +119,19 @@ unsafe fn append_item(
     text: &str,
     checked: bool,
 ) {
-    let w: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
-    let flags = if checked {
-        MF_STRING | MF_CHECKED
-    } else {
-        MF_STRING
-    };
-    let _ = AppendMenuW(menu, flags, id, PCWSTR(w.as_ptr()));
+    unsafe {
+        let w: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
+        let flags = if checked {
+            MF_STRING | MF_CHECKED
+        } else {
+            MF_STRING
+        };
+        let _ = AppendMenuW(menu, flags, id, PCWSTR(w.as_ptr()));
+    }
 }
 
-pub fn open_config_in_editor() {
-    if let Some(path) = Config::ensure_default_file() {
+pub fn open_config_in_editor(override_path: Option<&std::path::Path>) {
+    if let Some(path) = Config::ensure_default_file_at(override_path) {
         let op: Vec<u16> = "open\0".encode_utf16().collect();
         let file: Vec<u16> = path
             .to_string_lossy()

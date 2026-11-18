@@ -6,52 +6,51 @@ use crate::layout::Rect;
 use crate::palette::{Rgba, ThemeSource};
 use crate::recency::WindowCandidate;
 use std::collections::HashSet;
-use std::ffi::{c_void, OsString};
+use std::ffi::{OsString, c_void};
 use std::os::windows::ffi::OsStringExt;
 use std::path::Path;
-use windows::core::{IUnknown, Interface, GUID, HRESULT, PCWSTR, PWSTR};
-use windows::Win32::Foundation::{CloseHandle, BOOL, HANDLE, HWND, LPARAM, POINT, RECT, WPARAM};
+use windows::Win32::Foundation::{BOOL, CloseHandle, HANDLE, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
-    DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS, DWM_CLOAKED_APP,
-    DWM_CLOAKED_INHERITED, DWM_CLOAKED_SHELL,
+    DWM_CLOAKED_APP, DWM_CLOAKED_INHERITED, DWM_CLOAKED_SHELL, DWMWA_CLOAKED,
+    DWMWA_EXTENDED_FRAME_BOUNDS, DwmGetWindowAttribute,
 };
 use windows::Win32::Graphics::Gdi::{
-    EnumDisplayMonitors, GetMonitorInfoW, MonitorFromPoint, MonitorFromWindow, HDC, HMONITOR,
-    MONITORINFOEXW, MONITOR_DEFAULTTONEAREST,
+    EnumDisplayMonitors, GetMonitorInfoW, HDC, HMONITOR, MONITOR_DEFAULTTONEAREST, MONITORINFOEXW,
+    MonitorFromPoint, MonitorFromWindow,
 };
-use windows::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY};
-use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
+use windows::Win32::Security::{GetTokenInformation, TOKEN_ELEVATION, TOKEN_QUERY, TokenElevation};
+use windows::Win32::System::Com::{CLSCTX_ALL, CoCreateInstance};
 use windows::Win32::System::Registry::{
-    RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_CURRENT_USER, KEY_READ, REG_BINARY,
-    REG_DWORD, REG_SZ,
+    HKEY, HKEY_CURRENT_USER, KEY_READ, REG_BINARY, REG_DWORD, REG_SZ, RegCloseKey, RegOpenKeyExW,
+    RegQueryValueExW,
 };
 use windows::Win32::System::RemoteDesktop::ProcessIdToSessionId;
 use windows::Win32::System::Threading::{
     AttachThreadInput, GetCurrentProcess, GetCurrentProcessId, GetCurrentThreadId, OpenProcess,
-    OpenProcessToken, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
-    PROCESS_QUERY_LIMITED_INFORMATION,
+    OpenProcessToken, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
+    QueryFullProcessImageNameW,
 };
 use windows::Win32::UI::HiDpi::{
-    SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+    DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-    KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_CONTROL, VK_LEFT, VK_LWIN, VK_RIGHT,
+    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
+    KEYEVENTF_KEYUP, SendInput, VIRTUAL_KEY, VK_CONTROL, VK_LEFT, VK_LWIN, VK_RIGHT,
 };
 use windows::Win32::UI::Shell::{
-    IVirtualDesktopManager, SHGetFileInfoW, ShellExecuteW, VirtualDesktopManager, SHFILEINFOW,
-    SHGFI_ICON, SHGFI_LARGEICON,
+    IVirtualDesktopManager, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON, SHGetFileInfoW,
+    ShellExecuteW, VirtualDesktopManager,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    AllowSetForegroundWindow, BringWindowToTop, EnumChildWindows, EnumWindows, GetAncestor,
-    GetClassLongPtrW, GetClassNameW, GetCursorPos, GetForegroundWindow, GetWindow,
-    GetWindowLongPtrW, GetWindowPlacement, GetWindowRect, GetWindowTextLengthW, GetWindowTextW,
-    GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, SendMessageTimeoutW,
-    SetForegroundWindow, ShowWindow, SystemParametersInfoW, ASFW_ANY, GA_ROOTOWNER, GCLP_HICON,
-    GCLP_HICONSM, GW_OWNER, HICON, ICON_BIG, ICON_SMALL2, SMTO_ABORTIFHUNG, SPI_GETDESKWALLPAPER,
-    SW_RESTORE, SW_SHOWNORMAL, WINDOWPLACEMENT, WS_EX_APPWINDOW, WS_EX_NOACTIVATE,
-    WS_EX_TOOLWINDOW,
+    ASFW_ANY, AllowSetForegroundWindow, BringWindowToTop, EnumChildWindows, EnumWindows,
+    GA_ROOTOWNER, GCLP_HICON, GCLP_HICONSM, GW_OWNER, GetAncestor, GetClassLongPtrW, GetClassNameW,
+    GetCursorPos, GetForegroundWindow, GetWindow, GetWindowLongPtrW, GetWindowPlacement,
+    GetWindowRect, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId, HICON, ICON_BIG,
+    ICON_SMALL2, IsIconic, IsWindow, IsWindowVisible, SMTO_ABORTIFHUNG, SPI_GETDESKWALLPAPER,
+    SW_RESTORE, SW_SHOWNORMAL, SendMessageTimeoutW, SetForegroundWindow, ShowWindow,
+    SystemParametersInfoW, WINDOWPLACEMENT, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
+use windows::core::{GUID, HRESULT, IUnknown, Interface, PCWSTR, PWSTR};
 
 pub fn enable_dpi_awareness() {
     unsafe {
@@ -170,10 +169,11 @@ pub fn current_wallpaper_path() -> Option<String> {
             return Some(path);
         }
     }
-    if let Some(path) = reg_read_sz(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallPaper") {
-        if !path.is_empty() && Path::new(&path).exists() {
-            return Some(path);
-        }
+    if let Some(path) = reg_read_sz(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallPaper")
+        && !path.is_empty()
+        && Path::new(&path).exists()
+    {
+        return Some(path);
     }
     if let Some(appdata) = std::env::var_os("APPDATA") {
         let transcoded =
@@ -203,25 +203,25 @@ pub struct VirtualDesktopSnapshot {
 impl VirtualDesktopSnapshot {
     pub fn read() -> Self {
         let base = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VirtualDesktops";
-        if let Some((com_guids, com_curr)) = com_list_desktops() {
-            if !com_guids.is_empty() {
-                let ordered = com_guids
-                    .iter()
-                    .enumerate()
-                    .map(|(i, &guid)| {
-                        Self::build_info(
-                            base,
-                            guid,
-                            i + 1,
-                            com_curr.map(|c| c == guid).unwrap_or(i == 0),
-                        )
-                    })
-                    .collect();
-                return Self {
-                    ordered,
-                    current_guid: com_curr,
-                };
-            }
+        if let Some((com_guids, com_curr)) = com_list_desktops()
+            && !com_guids.is_empty()
+        {
+            let ordered = com_guids
+                .iter()
+                .enumerate()
+                .map(|(i, &guid)| {
+                    Self::build_info(
+                        base,
+                        guid,
+                        i + 1,
+                        com_curr.map(|c| c == guid).unwrap_or(i == 0),
+                    )
+                })
+                .collect();
+            return Self {
+                ordered,
+                current_guid: com_curr,
+            };
         }
 
         let mut session_id = 0u32;
@@ -248,10 +248,11 @@ impl VirtualDesktopSnapshot {
             })
             .unwrap_or_default();
 
-        if let Some(curr) = current_guid {
-            if !guids.is_empty() && !guids.contains(&curr) {
-                guids.insert(0, curr);
-            }
+        if let Some(curr) = current_guid
+            && !guids.is_empty()
+            && !guids.contains(&curr)
+        {
+            guids.insert(0, curr);
         }
 
         let ordered = guids
@@ -319,32 +320,34 @@ pub fn enumerate_monitors() -> (Vec<MonitorDesc>, Rect) {
         _rc: *mut RECT,
         lparam: LPARAM,
     ) -> BOOL {
-        let state = &mut *(lparam.0 as *mut State);
-        let mut info = MONITORINFOEXW::default();
-        info.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;
-        if GetMonitorInfoW(hmon, &mut info as *mut _ as *mut _).as_bool() {
-            let r = info.monitorInfo.rcMonitor;
-            let len = info
-                .szDevice
-                .iter()
-                .position(|&c| c == 0)
-                .unwrap_or(info.szDevice.len());
-            let raw_name = OsString::from_wide(&info.szDevice[..len])
-                .to_string_lossy()
-                .into_owned();
-            let short = raw_name.trim_start_matches("\\\\.\\").to_string();
-            state.monitors.push(MonitorDesc {
-                name: short,
-                rect: Rect {
-                    x: r.left as f64,
-                    y: r.top as f64,
-                    width: (r.right - r.left).max(1) as f64,
-                    height: (r.bottom - r.top).max(1) as f64,
-                },
-                focused: (info.monitorInfo.dwFlags & 1) != 0,
-            });
+        unsafe {
+            let state = &mut *(lparam.0 as *mut State);
+            let mut info = MONITORINFOEXW::default();
+            info.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;
+            if GetMonitorInfoW(hmon, &mut info as *mut _ as *mut _).as_bool() {
+                let r = info.monitorInfo.rcMonitor;
+                let len = info
+                    .szDevice
+                    .iter()
+                    .position(|&c| c == 0)
+                    .unwrap_or(info.szDevice.len());
+                let raw_name = OsString::from_wide(&info.szDevice[..len])
+                    .to_string_lossy()
+                    .into_owned();
+                let short = raw_name.trim_start_matches("\\\\.\\").to_string();
+                state.monitors.push(MonitorDesc {
+                    name: short,
+                    rect: Rect {
+                        x: r.left as f64,
+                        y: r.top as f64,
+                        width: (r.right - r.left).max(1) as f64,
+                        height: (r.bottom - r.top).max(1) as f64,
+                    },
+                    focused: (info.monitorInfo.dwFlags & 1) != 0,
+                });
+            }
+            BOOL(1)
         }
-        BOOL(1)
     }
 
     let mut state = State {
@@ -420,11 +423,13 @@ pub fn enumerate_windows(
     }
 
     unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
-        let state = &mut *(lparam.0 as *mut EnumState);
-        if hwnd.0 as isize != state.overlay {
-            state.raw_hwnds.push(hwnd);
+        unsafe {
+            let state = &mut *(lparam.0 as *mut EnumState);
+            if hwnd.0 as isize != state.overlay {
+                state.raw_hwnds.push(hwnd);
+            }
+            BOOL(1)
         }
-        BOOL(1)
     }
 
     let mut state = EnumState {
@@ -537,10 +542,10 @@ pub fn enumerate_windows(
             guids.push(ag);
         }
         for w in &raw_list {
-            if let Some(g) = w.desktop_guid {
-                if !guids.contains(&g) {
-                    guids.push(g);
-                }
+            if let Some(g) = w.desktop_guid
+                && !guids.contains(&g)
+            {
+                guids.push(g);
             }
         }
         if guids.is_empty() {
@@ -556,22 +561,20 @@ pub fn enumerate_windows(
             .collect()
     };
 
-    if !ordered_desktops.iter().any(|d| d.is_current) {
-        if let Some(first) = ordered_desktops.first_mut() {
-            first.is_current = true;
-        }
+    if !ordered_desktops.iter().any(|d| d.is_current)
+        && let Some(first) = ordered_desktops.first_mut()
+    {
+        first.is_current = true;
     }
 
     // Ensure any off-current desktop GUID seen on a real window exists in ordered_desktops.
     for w in &raw_list {
-        if !w.on_current_desktop {
-            if let Some(g) = w.desktop_guid {
-                if !ordered_desktops.iter().any(|d| d.guid == g) {
-                    let idx = ordered_desktops.len() + 1;
-                    ordered_desktops
-                        .push(VirtualDesktopSnapshot::build_info(vd_base, g, idx, false));
-                }
-            }
+        if !w.on_current_desktop
+            && let Some(g) = w.desktop_guid
+            && !ordered_desktops.iter().any(|d| d.guid == g)
+        {
+            let idx = ordered_desktops.len() + 1;
+            ordered_desktops.push(VirtualDesktopSnapshot::build_info(vd_base, g, idx, false));
         }
     }
 
@@ -791,14 +794,16 @@ fn resolve_window_process(hwnd: HWND, class_name: &str) -> (u32, String) {
             real_pid: Option<u32>,
         }
         unsafe extern "system" fn find_child(child: HWND, lparam: LPARAM) -> BOOL {
-            let state = &mut *(lparam.0 as *mut ChildPid);
-            let mut cpid: u32 = 0;
-            GetWindowThreadProcessId(child, Some(&mut cpid));
-            if cpid != 0 && cpid != state.host_pid {
-                state.real_pid = Some(cpid);
-                return BOOL(0);
+            unsafe {
+                let state = &mut *(lparam.0 as *mut ChildPid);
+                let mut cpid: u32 = 0;
+                GetWindowThreadProcessId(child, Some(&mut cpid));
+                if cpid != 0 && cpid != state.host_pid {
+                    state.real_pid = Some(cpid);
+                    return BOOL(0);
+                }
+                BOOL(1)
             }
-            BOOL(1)
         }
         let mut state = ChildPid {
             host_pid: pid,
@@ -811,11 +816,11 @@ fn resolve_window_process(hwnd: HWND, class_name: &str) -> (u32, String) {
                 LPARAM(&mut state as *mut _ as isize),
             );
         }
-        if let Some(real_pid) = state.real_pid {
-            if let Some(real_path) = process_image_path(real_pid) {
-                pid = real_pid;
-                path = real_path;
-            }
+        if let Some(real_pid) = state.real_pid
+            && let Some(real_path) = process_image_path(real_pid)
+        {
+            pid = real_pid;
+            path = real_path;
         }
     }
 
@@ -1301,11 +1306,7 @@ pub fn reg_read_binary(root: HKEY, subkey: &str, value_name: &str) -> Option<Vec
         )
         .is_ok();
         let _ = RegCloseKey(hkey);
-        if ok {
-            Some(buf)
-        } else {
-            None
-        }
+        if ok { Some(buf) } else { None }
     }
 }
 
@@ -1394,97 +1395,119 @@ const IID_IAPPLICATION_VIEW_COLLECTION: GUID = GUID::from_values(
 
 #[inline]
 unsafe fn vtable_fn(obj: &IUnknown, slot: usize) -> *const c_void {
-    let raw = obj.as_raw();
-    let vt = *(raw as *const *const *const c_void);
-    *vt.add(slot)
+    unsafe {
+        let raw = obj.as_raw();
+        let vt = *(raw as *const *const *const c_void);
+        *vt.add(slot)
+    }
 }
 
 unsafe fn sp_query_service(sp: &IUnknown, service: &GUID, iid: &GUID) -> Option<IUnknown> {
-    let f: unsafe extern "system" fn(
-        *mut c_void,
-        *const GUID,
-        *const GUID,
-        *mut *mut c_void,
-    ) -> HRESULT = std::mem::transmute(vtable_fn(sp, 3));
-    let mut out: *mut c_void = std::ptr::null_mut();
-    if f(sp.as_raw(), service, iid, &mut out).is_ok() && !out.is_null() {
-        Some(IUnknown::from_raw(out))
-    } else {
-        None
+    unsafe {
+        let f: unsafe extern "system" fn(
+            *mut c_void,
+            *const GUID,
+            *const GUID,
+            *mut *mut c_void,
+        ) -> HRESULT = std::mem::transmute(vtable_fn(sp, 3));
+        let mut out: *mut c_void = std::ptr::null_mut();
+        if f(sp.as_raw(), service, iid, &mut out).is_ok() && !out.is_null() {
+            Some(IUnknown::from_raw(out))
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn obj_array_count(arr: &IUnknown) -> Option<u32> {
-    let f: unsafe extern "system" fn(*mut c_void, *mut u32) -> HRESULT =
-        std::mem::transmute(vtable_fn(arr, 3));
-    let mut count = 0u32;
-    if f(arr.as_raw(), &mut count).is_ok() {
-        Some(count)
-    } else {
-        None
+    unsafe {
+        let f: unsafe extern "system" fn(*mut c_void, *mut u32) -> HRESULT =
+            std::mem::transmute(vtable_fn(arr, 3));
+        let mut count = 0u32;
+        if f(arr.as_raw(), &mut count).is_ok() {
+            Some(count)
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn obj_array_at(arr: &IUnknown, index: u32, iid: &GUID) -> Option<IUnknown> {
-    let f: unsafe extern "system" fn(*mut c_void, u32, *const GUID, *mut *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(arr, 4));
-    let mut out: *mut c_void = std::ptr::null_mut();
-    if f(arr.as_raw(), index, iid, &mut out).is_ok() && !out.is_null() {
-        Some(IUnknown::from_raw(out))
-    } else {
-        None
+    unsafe {
+        let f: unsafe extern "system" fn(
+            *mut c_void,
+            u32,
+            *const GUID,
+            *mut *mut c_void,
+        ) -> HRESULT = std::mem::transmute(vtable_fn(arr, 4));
+        let mut out: *mut c_void = std::ptr::null_mut();
+        if f(arr.as_raw(), index, iid, &mut out).is_ok() && !out.is_null() {
+            Some(IUnknown::from_raw(out))
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn vd_get_id(vd: &IUnknown) -> Option<GUID> {
-    // Slot 4 on IVirtualDesktop (`3F07F4BE-...` and `536D3495-...`) is GetId(GUID*)
-    let f: unsafe extern "system" fn(*mut c_void, *mut GUID) -> HRESULT =
-        std::mem::transmute(vtable_fn(vd, 4));
-    let mut guid = GUID::zeroed();
-    if f(vd.as_raw(), &mut guid).is_ok() && guid != GUID::zeroed() {
-        Some(guid)
-    } else {
-        None
+    unsafe {
+        // Slot 4 on IVirtualDesktop (`3F07F4BE-...` and `536D3495-...`) is GetId(GUID*)
+        let f: unsafe extern "system" fn(*mut c_void, *mut GUID) -> HRESULT =
+            std::mem::transmute(vtable_fn(vd, 4));
+        let mut guid = GUID::zeroed();
+        if f(vd.as_raw(), &mut guid).is_ok() && guid != GUID::zeroed() {
+            Some(guid)
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn vdm_get_current_desktop(vdm: &IUnknown) -> Option<IUnknown> {
-    let f: unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(vdm, 6));
-    let mut out: *mut c_void = std::ptr::null_mut();
-    if f(vdm.as_raw(), &mut out).is_ok() && !out.is_null() {
-        Some(IUnknown::from_raw(out))
-    } else {
-        None
+    unsafe {
+        let f: unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> HRESULT =
+            std::mem::transmute(vtable_fn(vdm, 6));
+        let mut out: *mut c_void = std::ptr::null_mut();
+        if f(vdm.as_raw(), &mut out).is_ok() && !out.is_null() {
+            Some(IUnknown::from_raw(out))
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn vdm_get_desktops(vdm: &IUnknown) -> Option<IUnknown> {
-    let f: unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(vdm, 7));
-    let mut out: *mut c_void = std::ptr::null_mut();
-    if f(vdm.as_raw(), &mut out).is_ok() && !out.is_null() {
-        Some(IUnknown::from_raw(out))
-    } else {
-        None
+    unsafe {
+        let f: unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> HRESULT =
+            std::mem::transmute(vtable_fn(vdm, 7));
+        let mut out: *mut c_void = std::ptr::null_mut();
+        if f(vdm.as_raw(), &mut out).is_ok() && !out.is_null() {
+            Some(IUnknown::from_raw(out))
+        } else {
+            None
+        }
     }
 }
 
 unsafe fn vdm_move_view_to_desktop(vdm: &IUnknown, view: &IUnknown, desktop: &IUnknown) -> bool {
-    let f: unsafe extern "system" fn(*mut c_void, *mut c_void, *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(vdm, 4));
-    f(vdm.as_raw(), view.as_raw(), desktop.as_raw()).is_ok()
+    unsafe {
+        let f: unsafe extern "system" fn(*mut c_void, *mut c_void, *mut c_void) -> HRESULT =
+            std::mem::transmute(vtable_fn(vdm, 4));
+        f(vdm.as_raw(), view.as_raw(), desktop.as_raw()).is_ok()
+    }
 }
 
 unsafe fn avc_get_view_for_hwnd(avc: &IUnknown, hwnd: HWND) -> Option<IUnknown> {
-    // Slot 6 on IApplicationViewCollection is GetViewForHwnd(HWND, IApplicationView**)
-    let f: unsafe extern "system" fn(*mut c_void, HWND, *mut *mut c_void) -> HRESULT =
-        std::mem::transmute(vtable_fn(avc, 6));
-    let mut out: *mut c_void = std::ptr::null_mut();
-    if f(avc.as_raw(), hwnd, &mut out).is_ok() && !out.is_null() {
-        Some(IUnknown::from_raw(out))
-    } else {
-        None
+    unsafe {
+        // Slot 6 on IApplicationViewCollection is GetViewForHwnd(HWND, IApplicationView**)
+        let f: unsafe extern "system" fn(*mut c_void, HWND, *mut *mut c_void) -> HRESULT =
+            std::mem::transmute(vtable_fn(avc, 6));
+        let mut out: *mut c_void = std::ptr::null_mut();
+        if f(avc.as_raw(), hwnd, &mut out).is_ok() && !out.is_null() {
+            Some(IUnknown::from_raw(out))
+        } else {
+            None
+        }
     }
 }
 
@@ -1513,10 +1536,10 @@ fn query_internal_vdm() -> Option<(IUnknown, IUnknown)> {
 fn read_desktop_guid(arr: &IUnknown, index: u32) -> Option<(GUID, IUnknown)> {
     unsafe {
         for vd_iid in [IID_IVIRTUAL_DESKTOP_24H2, IID_IVIRTUAL_DESKTOP_ALT] {
-            if let Some(vd) = obj_array_at(arr, index, &vd_iid) {
-                if let Some(g) = vd_get_id(&vd) {
-                    return Some((g, vd));
-                }
+            if let Some(vd) = obj_array_at(arr, index, &vd_iid)
+                && let Some(g) = vd_get_id(&vd)
+            {
+                return Some((g, vd));
             }
         }
         None
@@ -1550,34 +1573,30 @@ fn move_window_to_desktop_guid(
             return false;
         }
 
-        if let Some((sp, internal)) = query_internal_vdm() {
-            if let Some(avc) = sp_query_service(
+        if let Some((sp, internal)) = query_internal_vdm()
+            && let Some(avc) = sp_query_service(
                 &sp,
                 &IID_IAPPLICATION_VIEW_COLLECTION,
                 &IID_IAPPLICATION_VIEW_COLLECTION,
-            ) {
-                if let Some(view) = avc_get_view_for_hwnd(&avc, hwnd) {
-                    if let Some(arr) = vdm_get_desktops(&internal) {
-                        if let Some(count) = obj_array_count(&arr) {
-                            for i in 0..count {
-                                if let Some((g, desktop_vd)) = read_desktop_guid(&arr, i) {
-                                    if g == target_guid
-                                        && vdm_move_view_to_desktop(&internal, &view, &desktop_vd)
-                                    {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                    }
+            )
+            && let Some(view) = avc_get_view_for_hwnd(&avc, hwnd)
+            && let Some(arr) = vdm_get_desktops(&internal)
+            && let Some(count) = obj_array_count(&arr)
+        {
+            for i in 0..count {
+                if let Some((g, desktop_vd)) = read_desktop_guid(&arr, i)
+                    && g == target_guid
+                    && vdm_move_view_to_desktop(&internal, &view, &desktop_vd)
+                {
+                    return true;
                 }
             }
         }
 
-        if let Some(m) = vdm {
-            if m.MoveWindowToDesktop(hwnd, &target_guid).is_ok() {
-                return true;
-            }
+        if let Some(m) = vdm
+            && m.MoveWindowToDesktop(hwnd, &target_guid).is_ok()
+        {
+            return true;
         }
     }
     false

@@ -3,7 +3,7 @@
 **A hardware-accelerated, depth-based `Alt+Tab` window switcher and Virtual Desktop workspace organizer for Windows 10/11 — written in pure Rust with Direct3D 11, Direct2D, DirectWrite, and WIC, visually inspired by [mtolhuys/fathom](https://github.com/mtolhuys/fathom).**
 
 ![Platform: Windows 10 / 11](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D6?style=flat-square)
-![Rust Edition 2021](https://img.shields.io/badge/rust-Pure%20Rust-orange?style=flat-square)
+![Rust Edition 2024](https://img.shields.io/badge/rust-Edition%202024-orange?style=flat-square)
 [![Windows CI](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/actions/workflows/ci.yml/badge.svg)](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-mdBook%20Manual-00f5d4?style=flat-square&logo=gitbook&logoColor=black)](https://fruitsaladwindowsai-zammy.github.io/Alt-Tab/)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)

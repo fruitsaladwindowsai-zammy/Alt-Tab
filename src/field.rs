@@ -409,10 +409,11 @@ pub fn workspace_by_number(
     number: i64,
 ) -> Option<usize> {
     for group in groups {
-        if !group.special && group.id == Some(number) {
-            if let Some(front) = group_front(group, order) {
-                return Some(front);
-            }
+        if !group.special
+            && group.id == Some(number)
+            && let Some(front) = group_front(group, order)
+        {
+            return Some(front);
         }
     }
     None

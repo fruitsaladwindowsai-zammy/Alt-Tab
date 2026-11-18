@@ -28,3 +28,6 @@ Self-compiled open-source binaries are not commercially code-signed. Click **Mor
 ```powershell
 .\target\release\winscroller-alt-tab.exe --validate
 ```
+
+### 7. Where are crash logs written?
+Any unexpected panic writes a timestamped backtrace to `%APPDATA%\winscroller-alt-tab\crash.log`. Attach it when opening a bug report on GitHub.
