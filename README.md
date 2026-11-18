@@ -5,6 +5,7 @@
 ![Platform: Windows 10 / 11](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D6?style=flat-square)
 ![Rust Edition 2024](https://img.shields.io/badge/rust-Edition%202024-orange?style=flat-square)
 [![Windows CI](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/actions/workflows/ci.yml/badge.svg)](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/actions/workflows/ci.yml)
+[![Latest Release EXE](https://img.shields.io/badge/download-Latest%20.exe-00c853?style=flat-square&logo=windows)](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/releases/latest/download/winscroller-alt-tab.exe)
 [![Documentation](https://img.shields.io/badge/docs-mdBook%20Manual-00f5d4?style=flat-square&logo=gitbook&logoColor=black)](https://fruitsaladwindowsai-zammy.github.io/Alt-Tab/)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Architecture: Direct3D 11 + Direct2D](https://img.shields.io/badge/backend-Direct3D%2011%20%2B%20Direct2D-5C6BC0?style=flat-square)
@@ -78,7 +79,15 @@
 
 ## Installation Guide (Step-by-Step)
 
-> For an expanded beginner walkthrough with extra FAQs, see **[INSTALL.md](INSTALL.md)**.
+> **Fastest 1-Click Install (No Rust Required):**  
+> Download the latest automatically built **[`winscroller-alt-tab.exe`](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/releases/latest/download/winscroller-alt-tab.exe)** (compiled with static CRT on every push to `main`) — when launched, it **automatically checks and silently installs any missing Windows runtime prerequisites** (VC++ x64 Redistributable, default `config.toml`, Direct3D 11/Direct2D/DWM checks).
+>
+> Or run the 1-line automated PowerShell installer & updater:
+> ```powershell
+> irm https://raw.githubusercontent.com/fruitsaladwindowsai-zammy/Alt-Tab/main/scripts/install.ps1 | iex
+> ```
+>
+> For an expanded build-from-source walkthrough with extra FAQs, see **[INSTALL.md](INSTALL.md)**.
 
 ### 1. Prerequisites (Clean Windows 10 / 11 Machine)
 Windows does **not** include Git or Rust by default. Open an **Administrator PowerShell** prompt (`Win + X` → **Terminal (Admin)**) and run:

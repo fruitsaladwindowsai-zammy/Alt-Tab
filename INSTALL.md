@@ -162,14 +162,19 @@ cargo build --release
 
 ---
 
-## Alternative: Install Without Building (Prebuilt Release)
+## Alternative: Install Without Building (1-Click EXE or PowerShell)
 
-If you do not want to install Rust and build from source:
+If you do not want to install Rust and build from source, every push to `main` automatically builds and publishes a self-contained static-CRT **`winscroller-alt-tab.exe`** that **automatically checks and silently installs missing Windows prerequisites** (VC++ x64 Redistributable, Direct3D 11 / Direct2D / DWM checks, and default `config.toml`) when launched:
 
-1. Visit the [Releases](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/releases) page.
-2. Download `winscroller-alt-tab.exe` under the latest release assets.
-3. Place `winscroller-alt-tab.exe` in a permanent folder (e.g. `C:\Users\<YourUser>\AppData\Local\Programs\WinscrollerAltTab\`).
-4. Double-click to launch it, then right-click its tray icon and select **Start with Windows**.
+### Option A: 1-Line Automated PowerShell Installer & Updater
+```powershell
+irm https://raw.githubusercontent.com/fruitsaladwindowsai-zammy/Alt-Tab/main/scripts/install.ps1 | iex
+```
+
+### Option B: Direct EXE Download
+1. Download the latest [`winscroller-alt-tab.exe`](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/releases/latest/download/winscroller-alt-tab.exe) from the [Releases](https://github.com/fruitsaladwindowsai-zammy/Alt-Tab/releases) page.
+2. Place `winscroller-alt-tab.exe` in a permanent folder (e.g. `C:\Users\<YourUser>\AppData\Local\Programs\WinscrollerAltTab\`).
+3. Double-click to launch it (missing prerequisites and default config are set up automatically), then right-click its tray icon and select **Start with Windows**.
 
 ---
 

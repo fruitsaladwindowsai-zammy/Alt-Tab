@@ -14,6 +14,9 @@
 | `--quit` | Send `WM_FATHOM_QUIT` to gracefully stop a running instance and exit. |
 | `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml`. |
 | `--validate` | Strictly validate `config.toml` and report line-level errors. |
+| `--check-prereqs` | Verify Windows 10/11, DirectX/WIC/DWM, VC++ x64 & config prerequisites. |
+| `--install-prereqs` | Automatically check and silently install any missing Windows prerequisites. |
+| `--skip-prereqs` | Skip automatic startup prerequisite checks. |
 | `--demo` | Launch safe interactive demo (12 windows across 8 workspaces, zero hooks). |
 | `--render-demo <path>` | Render offscreen `1920x1080` demo PNG via WIC and exit. |
 | `--render-gallery <dir>` | Render all 5 feature screenshots and 13 animation frames and exit. |

@@ -12,6 +12,9 @@
 | `--quit` | Gracefully exit any running instance |
 | `--init-config` | Create default `%APPDATA%\winscroller-alt-tab\config.toml` |
 | `--validate` | Validate `config.toml` syntax, keys, bounds & hex colors |
+| `--check-prereqs` | Verify Windows runtime & DirectX/VC++ prerequisites |
+| `--install-prereqs` | Auto-check and silently install any missing Windows prerequisites |
+| `--skip-prereqs` | Skip automatic startup prerequisite checks |
 | `--demo` | Launch safe 12-window / 8-workspace interactive demo |
 | `--render-demo <path>` | Export offscreen `1920x1080` demo PNG and exit |
 | `--render-gallery <dir>` | Export all 5 feature screenshots and 13 animation frames |

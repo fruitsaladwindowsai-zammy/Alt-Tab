@@ -9,6 +9,7 @@ mod depth;
 mod field;
 mod layout;
 mod palette;
+mod prereqs;
 mod recency;
 mod renderer;
 mod tray;
@@ -1012,6 +1013,9 @@ fn print_help() {
            --quit                  Gracefully exit any currently running instance\n  \
            --init-config           Create default config.toml at %APPDATA%\\winscroller-alt-tab\\ (or --config path)\n  \
            --validate              Validate config.toml syntax and values\n  \
+           --check-prereqs         Check Windows runtime prerequisites and exit (0 = OK, 1 = missing)\n  \
+           --install-prereqs       Check and automatically install missing Windows prerequisites\n  \
+           --skip-prereqs          Skip automatic startup prerequisite checks\n  \
            --demo                  Launch interactive 12-window / 8-workspace demo\n  \
            --render-demo <path>    Render offscreen 1920x1080 demo PNG and exit\n  \
            --render-gallery <dir>  Render feature screenshots and animation frames\n  \
@@ -1035,6 +1039,9 @@ fn main() {
     let mut show_version = false;
     let mut mode_init = false;
     let mut mode_validate = false;
+    let mut mode_check_prereqs = false;
+    let mut mode_install_prereqs = false;
+    let mut skip_prereqs = false;
     let mut mode_quit = false;
     let mut render_demo_out: Option<String> = None;
     let mut render_gallery_dir: Option<String> = None;
@@ -1062,6 +1069,9 @@ fn main() {
             }
             "--init-config" => mode_init = true,
             "--validate" => mode_validate = true,
+            "--check-prereqs" => mode_check_prereqs = true,
+            "--install-prereqs" => mode_install_prereqs = true,
+            "--skip-prereqs" => skip_prereqs = true,
             "--quit" => mode_quit = true,
             "--browse" => browse_now = true,
             "--demo" => demo_now = true,
@@ -1194,6 +1204,23 @@ fn main() {
         return;
     }
 
+    if mode_check_prereqs || mode_install_prereqs {
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+        let report =
+            prereqs::verify_and_install(config_override.as_deref(), mode_install_prereqs, false);
+        print!("{}", report.format_summary());
+        let ok = report.all_critical_ok() && !report.has_any_missing();
+        unsafe {
+            CoUninitialize();
+        }
+        if !ok {
+            std::process::exit(1);
+        }
+        return;
+    }
+
     if mode_quit {
         unsafe {
             let _ = AttachConsole(ATTACH_PARENT_PROCESS);
@@ -1291,6 +1318,16 @@ fn main() {
                 CoUninitialize();
                 return;
             }
+        }
+    }
+
+    if !skip_prereqs {
+        let report = prereqs::verify_and_install(config_override.as_deref(), true, true);
+        if !report.all_critical_ok() {
+            unsafe {
+                CoUninitialize();
+            }
+            std::process::exit(1);
         }
     }
 

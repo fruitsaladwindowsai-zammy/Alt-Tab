@@ -18,6 +18,9 @@ Run `winscroller-alt-tab.exe` from PowerShell, Windows Terminal, or a Windows sh
 | `winscroller-alt-tab.exe --quit` | Sends a graceful shutdown message (`WM_FATHOM_QUIT`) to any running instance and exits immediately. |
 | `winscroller-alt-tab.exe --init-config` | Creates a default `%APPDATA%\winscroller-alt-tab\config.toml` if one does not already exist and prints its path. |
 | `winscroller-alt-tab.exe --validate` | Parses and strictly validates `%APPDATA%\winscroller-alt-tab\config.toml`, reporting line numbers for unknown sections, invalid keys, out-of-range numbers, or malformed hex colors. Exits `0` if valid, `1` on error. |
+| `winscroller-alt-tab.exe --check-prereqs` | Verifies Windows 10/11 OS build, Direct3D 11 / Direct2D / DirectWrite / DXGI / WIC / DWM DLLs, VC++ 2015–2022 x64 Redistributable, and user config. Exits `0` if all present, `1` if missing. |
+| `winscroller-alt-tab.exe --install-prereqs` | Runs all prerequisite checks and automatically installs missing components (silently installs VC++ x64 via `winget` with official Microsoft installer fallback and initializes default `config.toml`). |
+| `winscroller-alt-tab.exe --skip-prereqs` | Skips the automatic startup prerequisite check/installer for this launch. |
 | `winscroller-alt-tab.exe --demo` | Opens a standalone interactive preview window populated with 12 deterministic mock windows across 8 workspaces (`1`–`7` plus `special:scratchpad`). Does **not** install global keyboard hooks or touch your real windows. |
 | `winscroller-alt-tab.exe --render-demo <path>` | Renders a `1920x1080` offscreen Direct3D 11 / Direct2D PNG of the demo scene via WIC and exits (default output: `winscroller_demo.png`). |
 | `winscroller-alt-tab.exe --render-gallery <dir>` | Renders all 5 high-resolution feature screenshots and 13 animation frames (`<dir>/frames/frame_00.png`..`frame_12.png`) and exits. |
